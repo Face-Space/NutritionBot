@@ -1,0 +1,9 @@
+2025-09-08 14:54:28,224 - root - INFO - Логирование настроено успешно
+2025-09-08 14:54:28,226 - __main__ - INFO - Запуск телеграм бота
+2025-09-08 14:54:34,283 - aiogram.dispatcher - INFO - Start polling
+2025-09-08 14:54:34,380 - aiogram.dispatcher - INFO - Run polling for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-08 14:54:48,590 - aiogram.event - INFO - Update id=541969282 is handled. Duration 420 ms by bot id=8343829005
+2025-09-08 14:55:25,053 - aiogram.dispatcher - INFO - Polling stopped
+2025-09-08 14:55:25,177 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2025-09-08 14:55:25,178 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8343829005)
+2025-09-08 14:55:25,437 - aiogram.dispatcher - INFO - Polling stopped for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
