@@ -2,9 +2,11 @@ import asyncio
 import logging
 
 from aiogram import Router, types
-from aiogram.filters import CommandStart, or_f, Command
+from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery
 
+from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
 from states.FSM import UserSurvey
 
 logger = logging.getLogger()
@@ -18,13 +20,26 @@ async def start_bot(message: types.Message, state: FSMContext):
     await asyncio.sleep(2)
     await message.answer("Я помогу вам контролировать свой вес, подбирая план питания без жестких ограничений")
     await asyncio.sleep(2)
+    await message.answer("Выберите, чтобы вы хотели сделать:\n"
+                         "/start - Запуск/Перезапуск бота\n"
+                         "/set_params - Установка индивидуальных параметров (возраст, вес, цель и т.д.)\n"
+                         "/add_product - Добавление продуктов в базу пользователя\n"
+                         "/plan_meals - Генерация плана питания")
+
+
+# ---------------------------------/set_params/---------------------------------------------
+
+@user_private_router.message(Command("/set_params"))
+async def set_params(message: types.Message, state: FSMContext):
+    await message.answer("Отлично, давайте перейдём к делу")
+    await asyncio.sleep(2)
     await message.answer("Сейчас я задам несколько вопросов, чтобы составить план конкретно под вас")
     await asyncio.sleep(2)
     await message.answer("Для начала укажите свой возраст цифрами и без букв:")
     await state.set_state(UserSurvey.age)
 
 
-@user_private_router.message(or_f(UserSurvey.age, Command("set_params")))
+@user_private_router.message(UserSurvey.age)
 async def ask_age(message: types.Message, state: FSMContext):
     try:
         int(message.text)
@@ -34,14 +49,100 @@ async def ask_age(message: types.Message, state: FSMContext):
             return
 
     except ValueError:
-        await message.answer("Введите сколько вам полных лет без букв, символов")
+        await message.answer("Введите сколько вам полных лет без букв и символов")
         return
 
-    await message.answer("Хорошо, теперь введите пожалуйста свой пол: ")
+    await message.answer("Хорошо, теперь выберите пожалуйста свой пол: ", reply_markup=gender_kb.as_markup())
+    await state.update_data(age=message.text)
     await state.set_state(UserSurvey.gender)
 
 
+@user_private_router.callback_query(UserSurvey.gender)
+async def ask_gender(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Отлично, укажите свой рост цифрами в сантиметрах, без букв и символов:")
+    await state.update_data(gender=callback.data)
+    await state.set_state(UserSurvey.height)
 
+
+@user_private_router.message(UserSurvey.height)
+async def ask_height(message: types.Message, state: FSMContext):
+    try:
+        height = int(message.text)
+
+        if height > 250 or height < 70:
+            await message.answer("Введите пожалуйста настоящий рост.")
+            return
+
+    except ValueError:
+        await message.answer("Введите свой рост только цифрами и без лишних символов.")
+        return
+
+    await message.answer("Теперь введите свой вес.")
+    await state.update_data(height=message.text)
+    await state.set_state()
+
+
+@user_private_router.message(UserSurvey.weight)
+async def ask_weight(message: types.Message, state: FSMContext):
+    try:
+        weight = int(message.text)
+
+        if weight > 300 or weight < 30:
+            await message.answer("Введите пожалуйста настоящий вес.")
+            return
+
+    except ValueError:
+        await message.answer("Введите свой вес только цифрами и без лишних символов.")
+        return
+
+    await message.answer("По вашим ощущениям, какой ваш уровень физической активности:",
+                         reply_markup=activity_level_kb.as_markup())
+    await state.update_data(weight=message.text)
+    await state.set_state(UserSurvey.activity_level)
+
+
+@user_private_router.callback_query(UserSurvey.activity_level)
+async def activity_level(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Выберите цель для вашей диеты:", reply_markup=target_kb.as_markup())
+    await state.update_data(activity_level=callback.data)
+    await state.set_state(UserSurvey.target)
+
+
+@user_private_router.callback_query(UserSurvey.target)
+async def target(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Выберите удобное для вас количество приёмов пищи в день",
+                                  reply_markup=num_meals_kb.as_markup())
+    await state.update_data(target=callback.data)
+    await state.set_state(UserSurvey.number_of_meals)
+
+
+@user_private_router.callback_query(UserSurvey.number_of_meals)
+async def num_meals(callback: CallbackQuery, state: FSMContext):
+    await callback.answer()
+    await callback.message.answer("Напишите какие у вас есть противопоказания или заболевания "
+                                  "(аллергия, диабет, проблемы ЖКТ и т.д.)")
+    await state.update_data(num_meals=callback.data)
+    await state.set_state(UserSurvey.food_prohibitions)
+
+
+@user_private_router.message(UserSurvey.food_prohibitions)
+async def food_prohibitions(message: types.Message, state: FSMContext):
+    await state.update_data(food_prohibitions=message.text)
+    await state.clear()
+    await message.answer("Поздравляю, вы прошли опрос, все результаты записаны!")
+    await asyncio.sleep(2)
+    await message.answer("Теперь вы можете сгенерировать свой план питания, нажав /plan_meals")
+
+
+
+
+
+@user_private_router.message()
+async def trash_remove(message: types.Message):
+    await message.delete()
 
 
 

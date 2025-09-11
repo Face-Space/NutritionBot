@@ -1,0 +1,82 @@
+2025-09-10 19:26:29,513 - root - INFO - Логирование настроено успешно
+2025-09-10 19:26:29,517 - __main__ - INFO - Запуск телеграм бота
+2025-09-10 19:26:31,211 - aiogram.dispatcher - INFO - Start polling
+2025-09-10 19:26:31,320 - aiogram.dispatcher - INFO - Run polling for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 19:28:15,414 - aiogram.event - INFO - Update id=541969290 is handled. Duration 7641 ms by bot id=8343829005
+2025-09-10 19:28:20,526 - aiogram.event - INFO - Update id=541969291 is handled. Duration 161 ms by bot id=8343829005
+2025-09-10 19:28:31,863 - aiogram.event - INFO - Update id=541969292 is handled. Duration 133 ms by bot id=8343829005
+2025-09-10 19:31:50,881 - aiogram.dispatcher - INFO - Polling stopped
+2025-09-10 19:31:51,109 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2025-09-10 19:31:51,110 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8343829005)
+2025-09-10 19:31:51,374 - aiogram.dispatcher - INFO - Polling stopped for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 19:32:15,992 - root - INFO - Логирование настроено успешно
+2025-09-10 19:32:15,993 - __main__ - INFO - Запуск телеграм бота
+2025-09-10 19:32:16,997 - aiogram.dispatcher - INFO - Start polling
+2025-09-10 19:32:17,113 - aiogram.dispatcher - INFO - Run polling for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 19:32:31,088 - aiogram.event - INFO - Update id=541969293 is handled. Duration 458 ms by bot id=8343829005
+2025-09-10 19:32:36,699 - aiogram.event - INFO - Update id=541969294 is not handled. Duration 2 ms by bot id=8343829005
+2025-09-10 19:32:43,747 - aiogram.event - INFO - Update id=541969295 is not handled. Duration 3 ms by bot id=8343829005
+2025-09-10 19:33:01,044 - aiogram.event - INFO - Update id=541969296 is not handled. Duration 2 ms by bot id=8343829005
+2025-09-10 19:33:09,138 - aiogram.dispatcher - INFO - Polling stopped
+2025-09-10 19:33:09,337 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2025-09-10 19:33:09,338 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8343829005)
+2025-09-10 19:33:09,602 - aiogram.dispatcher - INFO - Polling stopped for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 19:33:27,297 - root - INFO - Логирование настроено успешно
+2025-09-10 19:33:27,298 - __main__ - INFO - Запуск телеграм бота
+2025-09-10 19:33:29,080 - aiogram.dispatcher - INFO - Start polling
+2025-09-10 19:33:29,202 - aiogram.dispatcher - INFO - Run polling for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 19:33:46,062 - aiogram.event - INFO - Update id=541969297 is handled. Duration 576 ms by bot id=8343829005
+2025-09-10 19:35:57,641 - aiogram.dispatcher - INFO - Polling stopped
+2025-09-10 19:35:57,821 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2025-09-10 19:35:57,822 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8343829005)
+2025-09-10 19:35:58,085 - aiogram.dispatcher - INFO - Polling stopped for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 20:32:08,016 - root - INFO - Логирование настроено успешно
+2025-09-10 20:32:08,019 - __main__ - INFO - Запуск телеграм бота
+2025-09-10 20:32:09,027 - aiogram.dispatcher - INFO - Start polling
+2025-09-10 20:32:09,140 - aiogram.dispatcher - INFO - Run polling for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 20:33:28,644 - aiogram.event - INFO - Update id=541969298 is handled. Duration 7250 ms by bot id=8343829005
+2025-09-10 20:33:34,763 - aiogram.event - INFO - Update id=541969299 is handled. Duration 161 ms by bot id=8343829005
+2025-09-10 20:33:38,597 - aiogram.event - INFO - Update id=541969300 is handled. Duration 204 ms by bot id=8343829005
+2025-09-10 20:33:41,697 - aiogram.event - INFO - Update id=541969301 is handled. Duration 121 ms by bot id=8343829005
+2025-09-10 20:33:44,351 - aiogram.event - INFO - Update id=541969302 is handled. Duration 154 ms by bot id=8343829005
+2025-09-10 20:33:46,430 - aiogram.event - INFO - Update id=541969303 is handled. Duration 351 ms by bot id=8343829005
+2025-09-10 20:33:52,144 - aiogram.event - INFO - Update id=541969304 is handled. Duration 236 ms by bot id=8343829005
+2025-09-10 20:33:54,567 - aiogram.event - INFO - Update id=541969305 is handled. Duration 161 ms by bot id=8343829005
+2025-09-10 20:33:59,415 - aiogram.event - INFO - Update id=541969306 is handled. Duration 236 ms by bot id=8343829005
+2025-09-10 20:34:06,872 - aiogram.event - INFO - Update id=541969307 is handled. Duration 218 ms by bot id=8343829005
+2025-09-10 20:34:12,093 - aiogram.event - INFO - Update id=541969308 is handled. Duration 162 ms by bot id=8343829005
+2025-09-10 20:34:17,814 - aiogram.event - INFO - Update id=541969309 is handled. Duration 204 ms by bot id=8343829005
+2025-09-10 20:34:21,807 - aiogram.event - INFO - Update id=541969310 is handled. Duration 202 ms by bot id=8343829005
+2025-09-10 20:34:24,615 - aiogram.event - INFO - Update id=541969311 is handled. Duration 219 ms by bot id=8343829005
+2025-09-10 20:34:36,998 - aiogram.dispatcher - INFO - Polling stopped
+2025-09-10 20:34:37,246 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2025-09-10 20:34:37,248 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8343829005)
+2025-09-10 20:34:37,618 - aiogram.dispatcher - INFO - Polling stopped for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 20:36:39,892 - root - INFO - Логирование настроено успешно
+2025-09-10 20:36:39,892 - __main__ - INFO - Запуск телеграм бота
+2025-09-10 20:36:40,915 - aiogram.dispatcher - INFO - Start polling
+2025-09-10 20:36:41,040 - aiogram.dispatcher - INFO - Run polling for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 20:37:08,871 - aiogram.event - INFO - Update id=541969312 is handled. Duration 7010 ms by bot id=8343829005
+2025-09-10 20:37:18,335 - aiogram.event - INFO - Update id=541969313 is handled. Duration 177 ms by bot id=8343829005
+2025-09-10 20:37:21,474 - aiogram.event - INFO - Update id=541969314 is handled. Duration 166 ms by bot id=8343829005
+2025-09-10 20:37:24,063 - aiogram.event - INFO - Update id=541969315 is handled. Duration 319 ms by bot id=8343829005
+2025-09-10 20:37:39,028 - aiogram.event - INFO - Update id=541969316 is handled. Duration 203 ms by bot id=8343829005
+2025-09-10 20:38:36,022 - aiogram.dispatcher - INFO - Polling stopped
+2025-09-10 20:38:36,179 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2025-09-10 20:38:36,181 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8343829005)
+2025-09-10 20:38:36,440 - aiogram.dispatcher - INFO - Polling stopped for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 20:48:20,643 - root - INFO - Логирование настроено успешно
+2025-09-10 20:48:20,644 - __main__ - INFO - Запуск телеграм бота
+2025-09-10 20:48:21,637 - aiogram.dispatcher - INFO - Start polling
+2025-09-10 20:48:21,750 - aiogram.dispatcher - INFO - Run polling for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
+2025-09-10 20:48:39,213 - aiogram.event - INFO - Update id=541969317 is handled. Duration 7108 ms by bot id=8343829005
+2025-09-10 20:48:59,468 - aiogram.event - INFO - Update id=541969318 is handled. Duration 171 ms by bot id=8343829005
+2025-09-10 20:49:01,598 - aiogram.event - INFO - Update id=541969319 is handled. Duration 304 ms by bot id=8343829005
+2025-09-10 20:49:07,280 - aiogram.event - INFO - Update id=541969320 is handled. Duration 224 ms by bot id=8343829005
+2025-09-10 20:49:09,374 - aiogram.event - INFO - Update id=541969321 is handled. Duration 165 ms by bot id=8343829005
+2025-09-10 20:49:27,787 - aiogram.event - INFO - Update id=541969322 is handled. Duration 148 ms by bot id=8343829005
+2025-09-10 20:49:34,395 - aiogram.event - INFO - Update id=541969323 is handled. Duration 203 ms by bot id=8343829005
+2025-09-10 20:50:00,568 - aiogram.dispatcher - INFO - Polling stopped
+2025-09-10 20:50:00,818 - aiogram.dispatcher - ERROR - Failed to fetch updates - TelegramNetworkError: HTTP Client says - ServerDisconnectedError: Server disconnected
+2025-09-10 20:50:00,820 - aiogram.dispatcher - WARNING - Sleep for 1.000000 seconds and try again... (tryings = 0, bot id = 8343829005)
+2025-09-10 20:50:01,087 - aiogram.dispatcher - INFO - Polling stopped for bot @nutritioon_bot id=8343829005 - 'NutritionBot'
