@@ -6,6 +6,9 @@ import asyncio
 import os
 from dotenv import load_dotenv, find_dotenv
 
+from database.engine import session_maker
+from middlewares.db import DataBaseSession
+
 load_dotenv(find_dotenv())
 
 # Добавляем корневую директорию в путь
@@ -44,6 +47,7 @@ async def main():
 
         dp.startup.register(_on_startup)
         dp.shutdown.register(_on_shutdown)
+        dp.update.middleware(DataBaseSession(session_pool=session_maker))
         await bot.delete_webhook(drop_pending_updates=True)
         await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())

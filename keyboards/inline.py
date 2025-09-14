@@ -10,12 +10,12 @@ gender_kb.add(InlineKeyboardButton(text="Мужской", callback_data="male"),
 
 activity_level_kb = InlineKeyboardBuilder()
 activity_level_kb.add(InlineKeyboardButton(text="Низкий", callback_data="low"),
-                      InlineKeyboardButton(text="Средний", callback_data="middle"),
+                      InlineKeyboardButton(text="Средний", callback_data="moderate"),
                       InlineKeyboardButton(text="Высокий", callback_data="high"))
 
 
 target_kb = InlineKeyboardBuilder()
-target_kb.add(InlineKeyboardButton(text="Снижение веса", callback_data="loss"),
+target_kb.add(InlineKeyboardButton(text="Снижение веса", callback_data="lose"),
               InlineKeyboardButton(text="Поддержание веса", callback_data="maintenance"),
               InlineKeyboardButton(text="Набор массы", callback_data="gain"))
 

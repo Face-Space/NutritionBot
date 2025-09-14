@@ -5,8 +5,11 @@ from aiogram import Router, types
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from database.orm_query import orm_add_user_info
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
+from services.calculate_nutrition import calculate_nutrition
 from states.FSM import UserSurvey
 
 logger = logging.getLogger()
@@ -24,12 +27,13 @@ async def start_bot(message: types.Message, state: FSMContext):
                          "/start - Запуск/Перезапуск бота\n"
                          "/set_params - Установка индивидуальных параметров (возраст, вес, цель и т.д.)\n"
                          "/add_product - Добавление продуктов в базу пользователя\n"
-                         "/plan_meals - Генерация плана питания")
+                         "/plan_meals - Генерация плана питания\n"
+                         "/payment - Тарифы")
 
 
 # ---------------------------------/set_params/---------------------------------------------
 
-@user_private_router.message(Command("/set_params"))
+@user_private_router.message(Command("set_params"))
 async def set_params(message: types.Message, state: FSMContext):
     await message.answer("Отлично, давайте перейдём к делу")
     await asyncio.sleep(2)
@@ -45,11 +49,11 @@ async def ask_age(message: types.Message, state: FSMContext):
         int(message.text)
 
         if len(message.text) >= 3 or len(message.text) < 2:
-            await message.answer("Введите пожалуйста свой настоящий возраст")
+            await message.answer("Введите пожалуйста свой настоящий возраст:")
             return
 
     except ValueError:
-        await message.answer("Введите сколько вам полных лет без букв и символов")
+        await message.answer("Введите сколько вам полных лет без букв и символов:")
         return
 
     await message.answer("Хорошо, теперь выберите пожалуйста свой пол: ", reply_markup=gender_kb.as_markup())
@@ -71,16 +75,16 @@ async def ask_height(message: types.Message, state: FSMContext):
         height = int(message.text)
 
         if height > 250 or height < 70:
-            await message.answer("Введите пожалуйста настоящий рост.")
+            await message.answer("Введите пожалуйста настоящий рост:")
             return
 
     except ValueError:
-        await message.answer("Введите свой рост только цифрами и без лишних символов.")
+        await message.answer("Введите свой рост только цифрами и без лишних символов:")
         return
 
-    await message.answer("Теперь введите свой вес.")
+    await message.answer("Теперь введите свой вес:")
     await state.update_data(height=message.text)
-    await state.set_state()
+    await state.set_state(UserSurvey.weight)
 
 
 @user_private_router.message(UserSurvey.weight)
@@ -129,15 +133,31 @@ async def num_meals(callback: CallbackQuery, state: FSMContext):
 
 
 @user_private_router.message(UserSurvey.food_prohibitions)
-async def food_prohibitions(message: types.Message, state: FSMContext):
+async def food_prohibitions(message: types.Message, state: FSMContext, session: AsyncSession):
     await state.update_data(food_prohibitions=message.text)
-    await state.clear()
+    data = await state.get_data()
+    await orm_add_user_info(session, data, int(message.from_user.id))
+
     await message.answer("Поздравляю, вы прошли опрос, все результаты записаны!")
     await asyncio.sleep(2)
-    await message.answer("Теперь вы можете сгенерировать свой план питания, нажав /plan_meals")
+    await message.answer("Теперь вы можете сгенерировать свой план питания, нажав  /plan_meals")
+    await state.clear()
 
+#-------------------------------------/plan_meals/-------------------------------------------
 
+@user_private_router.message(Command("plan_meals"))
+async def plan_meals(message: types.Message):
+    
+    result = calculate_nutrition(age, gender, weight, height, activity_level, target)
+    response = (
+        f"Ваш план питания:\n"
+        f"Калории в сутки: {result['calories']} ккал\n"
+        f"Белки: {result['protein_g']} г\n"
+        f"Жиры: {result['fat_g']} г\n"
+        f"Углеводы: {result['carbs_g']} г"
+    )
 
+    await message.reply(response)
 
 
 @user_private_router.message()

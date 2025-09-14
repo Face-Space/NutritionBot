@@ -1,0 +1,20 @@
+2025-09-11 22:04:25,072 - root - INFO - Логирование настроено успешно
+2025-09-11 22:04:25,074 - __main__ - INFO - Запуск телеграм бота
+2025-09-11 22:04:25,450 - asyncio - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000001AADBA71940>
+2025-09-11 22:06:34,087 - root - INFO - Логирование настроено успешно
+2025-09-11 22:06:34,089 - __main__ - INFO - Запуск телеграм бота
+2025-09-11 22:06:45,720 - asyncio - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000001C136BF9550>
+2025-09-11 22:07:19,629 - root - INFO - Логирование настроено успешно
+2025-09-11 22:07:19,630 - __main__ - INFO - Запуск телеграм бота
+2025-09-11 22:07:19,954 - asyncio - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000002C105EA5550>
+2025-09-11 22:08:01,756 - root - INFO - Логирование настроено успешно
+2025-09-11 22:08:01,757 - __main__ - INFO - Запуск телеграм бота
+2025-09-11 22:08:13,354 - asyncio - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x0000029E1E7C5550>
+2025-09-11 22:30:50,115 - root - INFO - Логирование настроено успешно
+2025-09-11 22:30:50,117 - __main__ - INFO - Запуск телеграм бота
+2025-09-11 22:31:27,769 - asyncio - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x000002998D701940>
