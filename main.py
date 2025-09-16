@@ -6,7 +6,7 @@ import asyncio
 import os
 from dotenv import load_dotenv, find_dotenv
 
-from database.engine import session_maker
+from database.engine import session_maker, create_db
 from middlewares.db import DataBaseSession
 
 load_dotenv(find_dotenv())
@@ -30,6 +30,7 @@ dp.include_router(user_private_router)
 
 
 async def _on_startup():
+    await create_db()
     await bot.send_message(admins_list[0], "Бот работает для всех")
     print("бот заработал")
 

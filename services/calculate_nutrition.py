@@ -1,7 +1,7 @@
 from typing import Dict
 
 
-def calculate_nutrition(age, gender, weight, height, activity_level, target) -> Dict[str, int]:
+def calculate_nutrition(age, gender, weight, height, activity_level, target, food_proh) -> Dict[str, int]:
     # Выбор формулы расчета норм
     # На практике используют проверенные формулы для базового обмена веществ (BMR) и общих норм калорий:
     # Формула Миффлина-Сан Жеора для BMR.

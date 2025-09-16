@@ -7,8 +7,9 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_query import orm_add_user_info
+from database.orm_query import orm_add_user_info, orm_get_user_info
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
+from parser.dishes_parser import DishesParser
 from services.calculate_nutrition import calculate_nutrition
 from states.FSM import UserSurvey
 
@@ -146,9 +147,11 @@ async def food_prohibitions(message: types.Message, state: FSMContext, session: 
 #-------------------------------------/plan_meals/-------------------------------------------
 
 @user_private_router.message(Command("plan_meals"))
-async def plan_meals(message: types.Message):
-    
-    result = calculate_nutrition(age, gender, weight, height, activity_level, target)
+async def plan_meals(message: types.Message, session: AsyncSession):
+    data = await orm_get_user_info(session, int(message.from_user.id))
+    print(data[0], "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
+    result = calculate_nutrition(**data)
     response = (
         f"Ваш план питания:\n"
         f"Калории в сутки: {result['calories']} ккал\n"
@@ -158,6 +161,11 @@ async def plan_meals(message: types.Message):
     )
 
     await message.reply(response)
+    dishes_parser = DishesParser(message.from_user_id)
+    dishes_results = dishes_parser.parse_dishes(dishes_links)
+    await message.answer("Вот ваш рацион питания на день с учётом необходимых для вас калорий:")
+
+
 
 
 @user_private_router.message()

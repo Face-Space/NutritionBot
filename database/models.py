@@ -1,4 +1,4 @@
-from sqlalchemy import DateTime, func, String
+from sqlalchemy import DateTime, func, String, Text
 from sqlalchemy.orm import DeclarativeBase, mapped_column, Mapped
 
 
@@ -18,4 +18,5 @@ class UserInfo(Base):
     height: Mapped[int] = mapped_column()
     activity_level: Mapped[str] = mapped_column(String(8))
     target: Mapped[str] = mapped_column(String(12))
+    food_prohibitions: Mapped[str] = mapped_column(Text)
 
