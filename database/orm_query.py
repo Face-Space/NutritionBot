@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import UserInfo
@@ -23,4 +23,7 @@ async def orm_get_user_info(session: AsyncSession, user_id: int):
     result = await session.execute(query)
     return result.scalars().all()
 
-
+async def orm_delete_user_info(session: AsyncSession, user_id: int):
+    query = delete(UserInfo).where(UserInfo.user_id == int(user_id))
+    await session.execute(query)
+    await session.commit()

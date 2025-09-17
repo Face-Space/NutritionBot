@@ -5,9 +5,10 @@ from aiogram import Router, types
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_query import orm_add_user_info, orm_get_user_info
+from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
 from parser.dishes_parser import DishesParser
 from services.calculate_nutrition import calculate_nutrition
@@ -135,10 +136,14 @@ async def num_meals(callback: CallbackQuery, state: FSMContext):
 
 @user_private_router.message(UserSurvey.food_prohibitions)
 async def food_prohibitions(message: types.Message, state: FSMContext, session: AsyncSession):
+    user_id = int(message.from_user.id)
     await state.update_data(food_prohibitions=message.text)
     data = await state.get_data()
-    await orm_add_user_info(session, data, int(message.from_user.id))
 
+    if await orm_get_user_info(session, user_id):
+        await orm_delete_user_info(session, user_id)
+
+    await orm_add_user_info(session, data, user_id)
     await message.answer("Поздравляю, вы прошли опрос, все результаты записаны!")
     await asyncio.sleep(2)
     await message.answer("Теперь вы можете сгенерировать свой план питания, нажав  /plan_meals")
@@ -149,9 +154,8 @@ async def food_prohibitions(message: types.Message, state: FSMContext, session: 
 @user_private_router.message(Command("plan_meals"))
 async def plan_meals(message: types.Message, session: AsyncSession):
     data = await orm_get_user_info(session, int(message.from_user.id))
-    print(data[0], "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
-    result = calculate_nutrition(**data)
+    result = calculate_nutrition(data)
     response = (
         f"Ваш план питания:\n"
         f"Калории в сутки: {result['calories']} ккал\n"
