@@ -98,3 +98,57 @@ class SeleniumManager:
                         continue
                     else:
                         logger.warning("Превышено количество попыток, возвращаем новый драйвер")
+                        raise Exception("Access blocked after retries")
+                else:
+                    logger.info("Антибот защита пройдена")
+                    return
+
+            except Exception as e:
+                if "Access blocked" in str(e):
+                    raise
+                time.sleep(15)
+                continue
+
+        logger.warning(f"Антибот защита не пройдена за {max_wait_time} секунд")
+        raise Exception("AntibotTimeout")
+
+
+    def _is_blocked(self) -> bool:
+        if not self.driver:
+            return True
+
+        try:
+            blocked_indicators = [
+                "cloudflare", "checking your browser", "enable javascript",
+                "access denied", "blocked", "ddos-guard", "проверка браузера",
+                "доступ ограничен", "access restricted"
+            ]
+
+            page_source = self.driver.page_source.lower()
+
+            for indicator in blocked_indicators:
+                if indicator in page_source:
+                    return True
+            return False
+
+        except Exception:
+            return True
+
+
+    def close(self):
+        if self.driver:
+            try:
+                self.driver.quit()
+                logger.debug("Драйвер закрыт успешно")
+
+            except Exception as e:
+                logger.error(f"Ошибка закрытия драйвера: {e}")
+
+            finally:
+                self.driver = None
+                self.wait = None
+
+
+
+
+

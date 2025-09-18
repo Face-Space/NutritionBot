@@ -167,15 +167,18 @@ async def plan_meals(message: types.Message, session: AsyncSession):
     await message.reply(response)
     dishes_parser = DishesParser(message.from_user_id)
     dishes_results = dishes_parser.parse_dishes(dishes_links)
-    await message.answer("Вот ваш рацион питания на день с учётом необходимых для вас калорий:")
+    await message.answer("Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n"
+                         "Завтрак:\n"
+                         "Обед:\n"
+                         "Ужин:\n")
 
-
+    # https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie
 
 
 @user_private_router.message()
 async def trash_remove(message: types.Message):
     await message.delete()
-
+ь
 
 
 

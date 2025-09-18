@@ -23,17 +23,18 @@ class DishesParser:
         self.results = List[DishesInfo]
 
 
-    def initialize(self):
-        try:
-            self.driver = self.selenium_manager.create_driver()
-            logger.info(f"Парсер блюд инициализирован")
-        except Exception as e:
-            logger.info(f"Ошибка инициализации парсера: {e}")
-            raise
+    # def initialize(self):
+    #     try:
+    #         self.driver = self.selenium_manager.create_driver()
+    #         logger.info(f"Парсер блюд инициализирован")
+    #     except Exception as e:
+    #         logger.info(f"Ошибка инициализации парсера: {e}")
+    #         raise
 
 
     def parse_dishes(self, dishes_links: Dict[str, str]) -> List[DishesInfo]:
         self.dishes_links = dishes_links
+
 
 
 
