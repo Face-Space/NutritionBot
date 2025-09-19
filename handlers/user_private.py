@@ -13,6 +13,7 @@ from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_
 from parser.dishes_parser import DishesParser
 from services.calculate_nutrition import calculate_nutrition
 from states.FSM import UserSurvey
+from utils import SeleniumManager
 
 logger = logging.getLogger()
 user_private_router = Router()
@@ -165,20 +166,26 @@ async def plan_meals(message: types.Message, session: AsyncSession):
     )
 
     await message.reply(response)
-    dishes_parser = DishesParser(message.from_user_id)
-    dishes_results = dishes_parser.parse_dishes(dishes_links)
-    await message.answer("Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n"
-                         "Завтрак:\n"
-                         "Обед:\n"
-                         "Ужин:\n")
+    url = "https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie"
+    dishes_parser = DishesParser(str(message.from_user.id))
+    dishes_parser.initialize()
+    breakfast = dishes_parser.parse_dishes(url)
+    # Выводит None
 
-    # https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie
+
+    await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n"
+                         f"Завтрак:{breakfast}\n"
+                         f"Обед:\n"
+                         f"Ужин:\n")
+
+    dishes_parser.close()
+
 
 
 @user_private_router.message()
 async def trash_remove(message: types.Message):
     await message.delete()
-ь
+
 
 
 
