@@ -8,14 +8,14 @@ from aiogram.types import CallbackQuery
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info
+from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_breakfast
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
 from parser.dishes_parser import DishesParser
 from services.calculate_nutrition import calculate_nutrition
 from states.FSM import UserSurvey
 from utils import SeleniumManager
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 user_private_router = Router()
 
 
@@ -166,23 +166,24 @@ async def plan_meals(message: types.Message, session: AsyncSession):
     )
 
     await message.reply(response)
-    url = "https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie"
-    dishes_parser = DishesParser(str(message.from_user.id))
-    dishes_parser.initialize()
-    breakfast = dishes_parser.parse_dishes(url)
+    # url = "https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie"
+    # dishes_parser = DishesParser(str(message.from_user.id))
+    # dishes_parser.initialize()
+    # breakfast = dishes_parser.parse_dishes(url)
     # Выводит None
-
+    breakfast = await orm_get_breakfast(session)
+    print(breakfast, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
     await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n"
                          f"Завтрак:{breakfast}\n"
                          f"Обед:\n"
                          f"Ужин:\n")
 
-    dishes_parser.close()
+    # dishes_parser.close()
 
 
 
-@user_private_router.message()
+@user_private_router.message(~Command("admin"))
 async def trash_remove(message: types.Message):
     await message.delete()
 

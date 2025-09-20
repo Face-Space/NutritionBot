@@ -7,6 +7,7 @@ import os
 from dotenv import load_dotenv, find_dotenv
 
 from database.engine import session_maker, create_db
+from handlers import admin_router
 from middlewares.db import DataBaseSession
 
 load_dotenv(find_dotenv())
@@ -27,7 +28,7 @@ bot = Bot(token=os.getenv("TOKEN"))
 dp = Dispatcher()
 
 dp.include_router(user_private_router)
-
+dp.include_router(admin_router)
 
 async def _on_startup():
     await create_db()

@@ -54,3 +54,10 @@ class DishesParser:
     def close(self):
         if self.selenium_manager:
             self.selenium_manager.close()
+
+
+
+
+
+
+
