@@ -48,6 +48,7 @@ class DishesParser:
         porridge =self.driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div[5]/div[2]/div[1]/a')
         porridge.click()
         name = self.driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div/table/tbody/tr[1]/td[1]/a').text
+        print(name, "!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         return name
 

@@ -27,8 +27,10 @@ from handlers.user_private import user_private_router
 bot = Bot(token=os.getenv("TOKEN"))
 dp = Dispatcher()
 
+
 dp.include_router(user_private_router)
 dp.include_router(admin_router)
+
 
 async def _on_startup():
     await create_db()

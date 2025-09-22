@@ -1,7 +1,7 @@
 from aiogram import types
 from aiogram.filters import Filter
 
-admins_list = ['5138537564', ]
+admins_list = [5138537564, ]
 
 class IsAdmin(Filter):
     def __init__(self):
