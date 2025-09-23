@@ -1,14 +1,18 @@
 import random
 import time
 
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium_stealth import stealth
 
 chrome_options = Options()
 driver = webdriver.Chrome(options=chrome_options)
+
+
 chrome_options.add_argument("--window-size=1920,1080")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disable-dev-shm-usage")
@@ -20,9 +24,22 @@ chrome_options.add_argument("--disable-plugins")
 
 
 driver.get("https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie")
+stealth(
+                driver,
+                languages=["ru-RU", "ru"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True
+            )
+driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+
+
+soup = BeautifulSoup(driver.page_source, "lxml")
 driver.implicitly_wait(20)
 
-# driver.execute_script("window.scrollBy(0, 500);")
+
 porridge = driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div[5]/div[2]/div[1]/a')
 porridge.click()
 porridge_table = (
@@ -30,24 +47,25 @@ porridge_table = (
         By.TAG_NAME, "tr"))
 
 
-for i in range(len(porridge_table)):
-    # Повторно ищем элементы каждый раз, чтобы получить свежие элементы, т.к. после driver.back() и паузы элементы в
-    # переменной porridge_table устаревают, и при следующей итерации обращение к element.text вызывает
-    # StaleElementReferenceException
-    porridge_table = (driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div/table/tbody').find_elements(By.TAG_NAME, "tr"))
-    element = porridge_table[i]
-    product_name = element.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div/table/tbody/tr[1]/td[1]/a').text
-    calories = driver.find_elements(By.CLASS_NAME, 'uk-text-right')[0].text.replace("кКал", "").strip()
+for i in porridge_table:
 
+    tr_tag = i.find_element(By.TAG_NAME, "a")
+    href = tr_tag.get_attribute("href")
 
-    element.click()
-    description = driver.find_element(By.CLASS_NAME, "mzr-recipe-view-description-tc").text
-    driver.back()
-    data = {"name_dish": product_name, "calories": calories}
+    dish_name = tr_tag.text
+    calories = i.find_elements(By.CLASS_NAME, "uk-text-right")[0].text.replace("кКал", "").strip()
+
+    driver.execute_script("window.open(arguments[0], '_blank')", href)
+    time.sleep(2)
+    driver.switch_to.window(driver.window_handles[-1])
+    time.sleep(2)
+
+    description = driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div[2]/div/p').text
+    driver.close()
+    driver.switch_to.window(driver.window_handles[0])
+
+    data = {"name_dish": dish_name, "description": description, "calories": float(calories)}
     print(data)
-
-    time.sleep(random.randint(1, 3))
-
 
 driver.quit()
 
