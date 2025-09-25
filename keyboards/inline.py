@@ -32,3 +32,4 @@ admin_kb.add(InlineKeyboardButton(text="Спарсить завтрак", callba
              InlineKeyboardButton(text="Спарсить перекус", callback_data="parse_snack"),
              InlineKeyboardButton(text="Спарсить обед", callback_data="parse_dinner"),
              InlineKeyboardButton(text="Спарсить ужин", callback_data="parse_evening_meal"))
+admin_kb.adjust(1)

@@ -26,10 +26,10 @@ class Breakfast(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name_dish: Mapped[str] = mapped_column(Text)
-    calories: Mapped[int] = mapped_column(Float)
-    proteins: Mapped[int] = mapped_column(Float)
-    fats: Mapped[int] = mapped_column(Float)
-    carbohydrates: Mapped[int] = mapped_column(Float)
+    calories: Mapped[float] = mapped_column(Float)
+    proteins: Mapped[float] = mapped_column(Float)
+    fats: Mapped[float] = mapped_column(Float)
+    carbohydrates: Mapped[float] = mapped_column(Float)
     description: Mapped[str] = mapped_column(Text)
 
 
