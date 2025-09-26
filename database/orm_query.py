@@ -32,16 +32,7 @@ async def orm_delete_user_info(session: AsyncSession, user_id: int):
     await session.commit()
 
 
-async def orm_add_breakfast(session: AsyncSession, data: dict):
-    session.add(Breakfast(
-        name_dish=data["name_dish"],
-        calories=float(data["calories"]),
-        proteins=float(data["proteins"]),
-        fats=float(data["fats"]),
-        carbohydrates=float(data["carbohydrates"]),
-        description=data["description"]
-    ))
-    await session.commit()
+
 
 
 async def orm_get_breakfast(session: AsyncSession):
