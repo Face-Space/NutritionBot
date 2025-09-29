@@ -3,6 +3,8 @@ import logging
 import random
 import time
 import concurrent.futures
+from functools import partial
+from typing import Optional
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -19,7 +21,7 @@ from database.models import Breakfast, Snack, Dinner, EveningMeal
 
 logger = logging.getLogger()
 
-def create_driver():
+def create_driver() -> webdriver.Chrome:
     chrome_options = Options()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--window-size=1920,1080")
@@ -47,26 +49,26 @@ def create_driver():
     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
     return driver
 
+
 all_data = []
 
 
-def parse_description(href):
-    driver = create_driver()
+def parse_description(href, driver) -> Optional[str]:
     try:
         driver.get(href)
         time.sleep(random.uniform(1, 2))
         description = driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div[2]/div/p').text
-        driver.quit()
+        print("Описание блюда спарсено!")
         return description
 
     except Exception as e:
-        driver.quit()
         logger.info(f"Ошибка парсинга {href}: {e}")
+        print(f"Ошибка парсинга {href}: {e}")
+        driver.quit()
         return None
 
 
-def parse_dishes():
-    driver = create_driver()
+def parse_dishes(driver):
     table = (
         driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div/table/tbody').find_elements(
             By.TAG_NAME, "tr"))
@@ -95,9 +97,6 @@ def parse_dishes():
         # time.sleep(random.randint(1, 3))
 
 
-        driver.close()
-        driver.switch_to.window(driver.window_handles[0])
-
         data = {
             "name_dish": dish_name,
             "href": href,
@@ -107,36 +106,46 @@ def parse_dishes():
             "carbohydrates": float(carbohydrates)
         }
 
-        print(data)
+        print("Словарь добавлен")
         all_data.append(data)
 
-    driver.quit()
+    # driver.close()
+    # driver.switch_to.window(driver.window_handles[0])
 
+    # driver.quit()
 
+    print("Запуск параллельного парсинга")
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
         hrefs = [dish["href"] for dish in all_data]
-        descriptions = list(executor.map(parse_description, hrefs))
+
+        # partial - инструмент для создания новой функции на базе существующей, при этом некоторые аргументы исходной
+        # функции фиксируются заранее.
+        print("1111")
+        partial_func = partial(parse_description, driver=driver)
+        print("2222")
+        descriptions = list(executor.map(partial_func, hrefs))
+        print("3333")
         # применяет функцию последовательно ко всем элементам итерируемого объекта, но при этом
         # распределяет работу между потоками, выполняя её параллельно
+    print("Описание спарсено")
 
     final_data = []
     for dish_info, desc in zip(all_data, descriptions):
         if desc is None:
             desc = ""
 
+        del dish_info["href"]
         dish_info["description"] = desc
         final_data.append(dish_info)
 
+    print(final_data)
     return final_data
 
 
-def main_actions(category_dish, time_eat):
-    driver = create_driver()
+def main_actions(category_dish, time_eat, driver):
     category_dish.click()
-    data = parse_dishes()
+    data = parse_dishes(driver)
     asyncio.run(_bulk_insert(data, time_eat))
-    # Возврат к предыдущей странице не нужен, так как базовый драйвер закрыт
-    # driver.back()
     all_data.clear()
 
 
@@ -149,31 +158,33 @@ async def _bulk_insert(data_list, time_eat):
 
 def parse_nutrition():
     driver = create_driver()
-    driver.get("https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie")
 
     # Парсинг завтрака
+    driver.get("https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie")
     porridge = driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div[5]/div[2]/div[1]/a')
     time_eat_class = Breakfast
-    main_actions(porridge, time_eat_class)
+    main_actions(porridge, time_eat_class, driver)
+    print("Завтрак спарсен!!!!!!!!!")
 
     # Парсинг десертов для завтрака
+    driver.get("https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie")
     desserts = driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div[5]/div[1]/div[5]/a')
     time_eat_class = Snack
-    main_actions(desserts, time_eat_class)
+    main_actions(desserts, time_eat_class, driver)
 
     # Парсинг обеда
+    driver.get("https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie")
     dinner = driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div[5]/div[2]/div[3]/a')
     time_eat_class = Dinner
-    main_actions(dinner, time_eat_class)
+    main_actions(dinner, time_eat_class, driver)
 
     # Парсинг ужина
+    driver.get("https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie")
     evening_meal = driver.find_element(By.XPATH, '//*[@id="mzr-grid-content"]/div/div[2]/div/div[5]/div[1]/div[2]/a')
     time_eat_class = EveningMeal
-    main_actions(evening_meal, time_eat_class)
+    main_actions(evening_meal, time_eat_class, driver)
 
     driver.quit()
-
-
 
 
 if __name__ == "__main__":
