@@ -1,9 +1,21 @@
-import csv
-import json
+import asyncio
 import os
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 import requests
+
+from database.engine import engine
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from database.models import EveningMeal, Breakfast, Snack, Dinner
+
+
+async def bulk_insert(data_list, time_eat):
+    async with AsyncSession(engine) as session:
+        objects = [time_eat(**k) for k in data_list]
+        session.add_all(objects)
+        await session.commit()
 
 
 headers = {
@@ -12,23 +24,28 @@ headers = {
     Chrome/134.0.0.0 Safari/537.36"
 }
 
+current_path = Path(__file__).parent
+# os.makedirs(data_path, exist_ok=True)
 url = "https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie"
 
 req = requests.get(url, headers=headers)
 src = req.text
 
-with open("index.html", "w", encoding="utf-8") as file:
+with open(f"{current_path}/index.html", "w", encoding="utf-8") as file:
     file.write(src)
 
 # сохраняем страницу в файл, чтобы продолжить работать с ней если вдруг получим бан
 
-with open("index.html", encoding="utf-8") as file:
+with open(f"{current_path}/index.html", encoding="utf-8") as file:
     src = file.read()
 
 
-soup = BeautifulSoup("lxml", src)
+soup = BeautifulSoup(src, "lxml")
 all_products_hrefs = soup.find_all(class_="mzr-tc-group-item-href")
 necessary_categories = ["Каши", "Вторые блюда", "Первые блюда", "Закуски", "Десерты"]
+meals = [EveningMeal, Breakfast, Snack, Breakfast,  Dinner]  # порядок записи данных в таблицы,
+                                                             # относительно их расположения на странице
+time_to_eat = None
 
 
 all_categories_dict = {}
@@ -39,6 +56,9 @@ for item in all_products_hrefs:
 
         all_categories_dict[item_text] = item_href
 
+    else:
+        continue
+
 
 # with open("all_categories_dict.json", "w", encoding="utf-8") as file:
 #     json.dump(all_categories_dict, file, indent=4,ensure_ascii=False)
@@ -47,20 +67,22 @@ for item in all_products_hrefs:
 # цикл, на каждой итерации которого мы будем заходить на страницу категории, собирать с неё данные о всех
 # товарах и их хим.составе и записывать всё это в файл
 
+iteration_count = int(len(all_categories_dict)) - 1
 count = 0
+print(f"Всего итераций: {iteration_count}")
+
 
 for category_name, category_href in all_categories_dict.items():
 
     req = requests.get(url=category_href, headers=headers)
     src = req.text
-    # os.makedirs("E:/MyPetProjects/NutritionBot/parser/html_pages", exist_ok=True)
 
     # сохранение страницы под именем категории
-    with open(f"data/{count}_{category_name}.html", "w", encoding="utf-8") as file:
+    with open(f"{current_path}/{count}_{category_name}.html", "w", encoding="utf-8") as file:
         file.write(src)
 
     # откроем и сохраним код страницы в переменную
-    with open(f"data/{count}_{category_name}.html", encoding="utf-8") as file:
+    with open(f"{current_path}/{count}_{category_name}.html", encoding="utf-8") as file:
         src = file.read()
 
     soup = BeautifulSoup(src, "lxml")
@@ -70,30 +92,52 @@ for category_name, category_href in all_categories_dict.items():
     if alert_block is not None:
         continue
 
-    # собираем заголовки таблицы
-    table_head = soup.find("mzr-tc-group-table").find("tr").find_all("th")
-    product = table_head[0].text
-    calories = table_head[1].text
-    proteins = table_head[2].text
-    fats = table_head[3].text
-    carbohydrates = table_head[4].text
-
-    # запись данных в таблицу
-    with open(f"data/{count}_{category_name}.csv", "w", encoding="utf-8") as file:
-        writer = csv.writer(file)
-        writer.writerow((product, calories, proteins, fats, carbohydrates))
-
     # собираем данные продуктов
     products_data = soup.find(class_="mzr-tc-group-table").find("tbody").find_all("tr")
-
-    product_info = []
+    products_info = []
 
     # из каждого tr тэга собираем td тэги в которых и содержится нужная нам инфа
     for i in products_data:
-        products_tds = i.find_all("td")
+        products_tds = i.find_all("td")  # здесь хранится список из td
 
-        title = products_tds[0].find("a").text
+        dish_name = products_tds[0].find("a").text
+        if "Торт" in dish_name: # торты не полезные, поэтому скипаем их нах
+            continue
 
+        href = products_tds[0].find("a").get("href")
+        desc_req = requests.get(url=href, headers=headers)
+        desc_src = desc_req.text
+        desc_soup = BeautifulSoup(desc_src, "lxml")
 
+        remove_table = str.maketrans({",": ".", "г": ""})
+        calories = products_tds[1].text.translate(remove_table).replace("кКал", "").strip()
+        proteins = products_tds[2].text.translate(remove_table).replace("кКал", "").strip()
+        fats = products_tds[3].text.translate(remove_table).replace("кКал", "").strip()
+        carbohydrates = products_tds[4].text.translate(remove_table).replace("кКал", "").strip()
+        description = desc_soup.find(class_="mzr-recipe-view-description-tc").text.strip()
+
+        data = {
+            "name_dish": dish_name,
+            "calories": float(calories),
+            "proteins": float(proteins),
+            "fats": float(fats),
+            "carbohydrates": float(carbohydrates),
+            "description": description
+        }
+
+        products_info.append(data)
+
+    time_to_eat = meals[count]
+    asyncio.run(bulk_insert(products_info, time_to_eat))
+    products_info.clear()
+
+    count += 1
+    print(f"# Итерация {count}. {category_name} записан...")
+    iteration_count = iteration_count - 1
+    if iteration_count == 0:
+        print("Работа завершена")
+        break
+
+    print(f"Осталось итераций: {iteration_count}")
 
 
