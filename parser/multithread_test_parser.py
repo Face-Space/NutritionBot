@@ -132,7 +132,8 @@ async def scrape_and_store():
             continue
 
         # собираем данные продуктов
-        products_data = soup.find(class_="mzr-tc-group-table").find("tbody").find_all("tr")
+        # products_data = soup.find(class_="mzr-tc-group-table").find("tbody").find_all("tr")
+        products_data = soup.select(".mzr-tc-group-table tbody tr")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             products_info = list(filter(None, executor.map(fetch_product_data, [p.find_all("td") for p in products_data])))
@@ -141,20 +142,14 @@ async def scrape_and_store():
 
 
         time_to_eat = meals[count]
-        asyncio.run(_bulk_insert(products_info, time_to_eat))
-        # print("Категория успешно записана в БД")
+        await _bulk_insert(products_info, time_to_eat)
+        print("Категория успешно записана в БД")
 
         count += 1
-        iteration_count = iteration_count - 1
-        # print(f"# Итерация {count}. {category_name} записан...")
+        print(f"# Итерация {count}. {category_name} записан...")
         logger.info(f"# Итерация {count}. {category_name} записан...")
-        # print(f"Осталось итераций: {iteration_count}")
-
-        if iteration_count == 0:
-            end_time = time.time()
-            duration = end_time - start_time
-            print(f"Работа завершена за {duration:.2f} секунд")
-            break
+        duration = time.time() - start_time
+        print(f"Работа завершена за {duration:.2f} секунд")
 
 
 if __name__ == "__main__":
