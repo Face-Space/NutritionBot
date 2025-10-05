@@ -1,4 +1,5 @@
 import asyncio
+import concurrent.futures
 import os
 from pathlib import Path
 
@@ -52,12 +53,7 @@ all_categories_dict = {}
 for item in all_products_hrefs:
     if item.text in necessary_categories:
         item_text = item.text
-        item_href = "https://health-diet.ru" + item.get('href')
-
-        all_categories_dict[item_text] = item_href
-
-    else:
-        continue
+        all_categories_dict[item_text] = "https://health-diet.ru" + item.get('href')
 
 
 # with open("all_categories_dict.json", "w", encoding="utf-8") as file:
@@ -95,16 +91,18 @@ for category_name, category_href in all_categories_dict.items():
     # собираем данные продуктов
     products_data = soup.find(class_="mzr-tc-group-table").find("tbody").find_all("tr")
     products_info = []
+    num = 0
 
     # из каждого tr тэга собираем td тэги в которых и содержится нужная нам инфа
     for i in products_data:
         products_tds = i.find_all("td")  # здесь хранится список из td
 
         dish_name = products_tds[0].find("a").text
-        if "Торт" in dish_name: # торты не полезные, поэтому скипаем их нах
+        if "Торт" in dish_name:  # торты не полезные, поэтому скипаем их нах
             continue
 
-        href = products_tds[0].find("a").get("href")
+        # with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        href = "https://health-diet.ru" + products_tds[0].find("a").get("href")
         desc_req = requests.get(url=href, headers=headers)
         desc_src = desc_req.text
         desc_soup = BeautifulSoup(desc_src, "lxml")
@@ -115,6 +113,7 @@ for category_name, category_href in all_categories_dict.items():
         fats = products_tds[3].text.translate(remove_table).replace("кКал", "").strip()
         carbohydrates = products_tds[4].text.translate(remove_table).replace("кКал", "").strip()
         description = desc_soup.find(class_="mzr-recipe-view-description-tc").text.strip()
+        # description = "description"
 
         data = {
             "name_dish": dish_name,
@@ -126,9 +125,12 @@ for category_name, category_href in all_categories_dict.items():
         }
 
         products_info.append(data)
+        num += 1
+        print(f"Название категории # {num} спарсено")
 
     time_to_eat = meals[count]
     asyncio.run(bulk_insert(products_info, time_to_eat))
+    print("Категория успешно записана в БД")
     products_info.clear()
 
     count += 1
