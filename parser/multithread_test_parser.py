@@ -20,20 +20,21 @@ headers = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) \
     Chrome/134.0.0.0 Safari/537.36"
 }
-current_path = Path(__file__).parent / "data"
+current_path = Path(__file__).parent / "html_data"
 
 
-def save_page(content: str, filename: str):
-    with open(filename, "w",encoding="utf=8") as file:
+def _save_page(content: str, filename: str):
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "w", encoding="utf-8") as file:
         file.write(content)
 
 
-def load_page(filename: str) -> str:
+def _load_page(filename: str) -> str:
     with open(filename, encoding="utf-8") as file:
         return file.read()
 
 
-meals = [EveningMeal, Breakfast, Snack, Dinner]  # порядок записи данных в таблицы,
+meals = [EveningMeal, Snack, Breakfast, Dinner]  # порядок записи данных в таблицы,
                                                  # относительно их расположения на странице
 
 
@@ -49,7 +50,7 @@ async def _bulk_insert(data_list, time_eat):
         await session.commit()
 
 
-def fetch_product_data(products_tds):
+def _fetch_product_data(products_tds):
     dish_name = products_tds[0].find("a").text
 
     href = "https://health-diet.ru" + products_tds[0].find("a").get("href")
@@ -80,7 +81,7 @@ def fetch_product_data(products_tds):
         return None
 
 
-def get_categories(src):
+def _get_categories(src):
     soup = BeautifulSoup(src, "lxml")
     all_products_hrefs = soup.find_all(class_="mzr-tc-group-item-href")
     necessary_categories = ["Каши", "Вторые блюда", "Первые блюда", "Закуски"]
@@ -103,10 +104,10 @@ async def scrape_and_store():
     filename = f"{current_path}/index.html"
 
     # сохраняем страницу в файл, чтобы продолжить работать с ней если вдруг получим бан
-    save_page(content, filename)
-    categories_src = load_page(filename)
+    _save_page(content, filename)
+    categories_src = _load_page(filename)
 
-    categories = get_categories(categories_src)
+    categories = _get_categories(categories_src)
     logger.info(f"Найдено категорий для обработки: {len(categories)}")
     count = 0
 
@@ -121,8 +122,8 @@ async def scrape_and_store():
         category_html = req.text
         page_filename = f"{current_path}/{count}_{category_name}.html"
 
-        save_page(category_html, page_filename)
-        dish_src = load_page(page_filename)
+        _save_page(category_html, page_filename)
+        dish_src = _load_page(page_filename)
 
         soup = BeautifulSoup(dish_src, "lxml")
 
@@ -136,7 +137,7 @@ async def scrape_and_store():
         products_data = soup.select(".mzr-tc-group-table tbody tr")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            products_info = list(filter(None, executor.map(fetch_product_data, [p.find_all("td") for p in products_data])))
+            products_info = list(filter(None, executor.map(_fetch_product_data, [p.find_all("td") for p in products_data])))
             # Если в качестве функции передать None, filter оставит только истинные значения
             # из последовательности (отфильтрует ложные).
 
