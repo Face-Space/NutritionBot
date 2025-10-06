@@ -33,7 +33,7 @@ async def orm_delete_user_info(session: AsyncSession, user_id: int):
 
 
 async def orm_get_breakfast(session: AsyncSession):
-    query = select(Breakfast).where(Breakfast.id == random.randint(1, 20))
+    query = select(Breakfast).where(Breakfast.id == random.randint(1, 18))
     result = await session.execute(query)
     return result.scalars().all()
 

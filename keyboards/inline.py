@@ -28,8 +28,5 @@ num_meals_kb.add(InlineKeyboardButton(text="2", callback_data="2"),
 
 
 admin_kb = InlineKeyboardBuilder()
-admin_kb.add(InlineKeyboardButton(text="Спарсить завтрак", callback_data="parse_breakfast"),
-             InlineKeyboardButton(text="Спарсить перекус", callback_data="parse_snack"),
-             InlineKeyboardButton(text="Спарсить обед", callback_data="parse_dinner"),
-             InlineKeyboardButton(text="Спарсить ужин", callback_data="parse_evening_meal"))
+admin_kb.add(InlineKeyboardButton(text="Спарсить завтрак", callback_data="parse_breakfast"))
 admin_kb.adjust(1)

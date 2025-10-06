@@ -10,10 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_breakfast
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
-from parser.dishes_parser import DishesParser
 from services.calculate_nutrition import calculate_nutrition
 from states.FSM import UserSurvey
-from utils import SeleniumManager
 
 logger = logging.getLogger(__name__)
 user_private_router = Router()
@@ -118,15 +116,6 @@ async def activity_level(callback: CallbackQuery, state: FSMContext):
 
 
 @user_private_router.callback_query(UserSurvey.target)
-async def target(callback: CallbackQuery, state: FSMContext):
-    await callback.answer()
-    await callback.message.answer("Выберите удобное для вас количество приёмов пищи в день",
-                                  reply_markup=num_meals_kb.as_markup())
-    await state.update_data(target=callback.data)
-    await state.set_state(UserSurvey.number_of_meals)
-
-
-@user_private_router.callback_query(UserSurvey.number_of_meals)
 async def num_meals(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.answer("Напишите какие у вас есть противопоказания или заболевания "
@@ -147,7 +136,7 @@ async def food_prohibitions(message: types.Message, state: FSMContext, session: 
     await orm_add_user_info(session, data, user_id)
     await message.answer("Поздравляю, вы прошли опрос, все результаты записаны!")
     await asyncio.sleep(2)
-    await message.answer("Теперь вы можете сгенерировать свой план питания, нажав  /plan_meals")
+    await message.answer("Теперь вы можете сгенерировать свой план питания, нажав /plan_meals")
     await state.clear()
 
 #-------------------------------------/plan_meals/-------------------------------------------
@@ -165,21 +154,15 @@ async def plan_meals(message: types.Message, session: AsyncSession):
         f"Углеводы: {result['carbs_g']} г"
     )
 
-    await message.reply(response)
-    # url = "https://health-diet.ru/table_calorie/?utm_source=leftMenu&utm_medium=table_calorie"
-    # dishes_parser = DishesParser(str(message.from_user.id))
-    # dishes_parser.initialize()
-    # breakfast = dishes_parser.parse_dishes(url)
-    # Выводит None
+    await message.answer(response)
+
     breakfast = await orm_get_breakfast(session)
-    print(breakfast, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
     await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n"
-                         f"Завтрак:{breakfast}\n"
+                         f"Завтрак:{breakfast[0].name_dish}\n"
                          f"Обед:\n"
                          f"Ужин:\n")
 
-    # dishes_parser.close()
 
 
 
