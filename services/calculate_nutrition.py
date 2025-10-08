@@ -37,6 +37,26 @@ def calculate_nutrition(data: list) -> Dict[str, int]:
     }
 
 
+def number_of_grams(data: dict, meals: dict):
+    necessary_calories = None
 
+    if meals == "breakfast":
+        necessary_calories = data['calories'] * 25 / 100
+        # здесь считаем, что для завтрака нужно 25% от суточного потребления калорий,
+        # в остальных похожий расчёт
+
+    elif meals == "snack":
+        necessary_calories = data['calories'] * 10 / 100
+
+    elif meals == "dinner":
+        necessary_calories = data['calories'] * 35 / 100
+
+    elif meals == "evening_meal":
+        necessary_calories = data['calories'] * 30 / 100
+
+    weight = necessary_calories / meals[0].calories * 100
+    # считаем количество грамм за один приём пищи
+
+    return weight
 
 

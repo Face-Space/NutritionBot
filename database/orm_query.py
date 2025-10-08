@@ -1,9 +1,9 @@
 import random
 
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import UserInfo, Breakfast
+from database.models import UserInfo, Breakfast, Snack
 
 
 async def orm_add_user_info(session: AsyncSession, data: dict, user_id: int):
@@ -33,8 +33,13 @@ async def orm_delete_user_info(session: AsyncSession, user_id: int):
 
 
 async def orm_get_breakfast(session: AsyncSession):
-    query = select(Breakfast).where(Breakfast.id == random.randint(1, 18))
+    count_result = await session.execute(select(func.count(Breakfast.id)))
+    count = count_result.scalar_one()
+    query = select(Breakfast).where(Breakfast.id == random.randint(1, count))
     result = await session.execute(query)
     return result.scalars().all()
 
 
+async def orm_get_snack(session: AsyncSession):
+    count_result = await session.execute(select(func.count(Snack.id)))
+    count = count_result.scalar_one()

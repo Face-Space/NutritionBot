@@ -8,5 +8,4 @@ class UserSurvey(StatesGroup):
     height = State()
     activity_level = State()
     target = State()
-    number_of_meals = State()
     food_prohibitions = State()

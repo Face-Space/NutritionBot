@@ -5,12 +5,11 @@ from aiogram import Router, types
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_breakfast
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
-from services.calculate_nutrition import calculate_nutrition
+from services.calculate_nutrition import calculate_nutrition, number_of_grams
 from states.FSM import UserSurvey
 
 logger = logging.getLogger(__name__)
@@ -157,13 +156,26 @@ async def plan_meals(message: types.Message, session: AsyncSession):
     await message.answer(response)
 
     breakfast = await orm_get_breakfast(session)
+    snack = await orm_get_snack(session)
+    dinner = await orm_get_dinner(session)
+    evening_meal = await orm_get_evening_meal(session)
+
+
+    meals = {
+        "breakfast": breakfast,
+        "snack": snack,
+        "dinner": dinner,
+        "evening_meal": evening_meal
+    }
+
+    weight = number_of_grams(result, meals["breakfast"])
 
     await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n"
-                         f"Завтрак:{breakfast[0].name_dish}\n"
-                         f"Обед:\n"
-                         f"Ужин:\n")
-
-
+                         f"Завтрак:\n{breakfast[0].name_dish}\n"
+                         f"Калории:{breakfast[0].calories}\n"
+                         f"Белки:\n"
+                         f"Жиры:\n"
+                         f"Углеводы:\n")
 
 
 @user_private_router.message(~Command("admin"))
