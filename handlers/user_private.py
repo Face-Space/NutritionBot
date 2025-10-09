@@ -7,7 +7,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_breakfast
+from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_breakfast, \
+    orm_get_snack, orm_get_dinner, orm_get_evening_meal
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
 from services.calculate_nutrition import calculate_nutrition, number_of_grams
 from states.FSM import UserSurvey
@@ -160,19 +161,11 @@ async def plan_meals(message: types.Message, session: AsyncSession):
     dinner = await orm_get_dinner(session)
     evening_meal = await orm_get_evening_meal(session)
 
-
-    meals = {
-        "breakfast": breakfast,
-        "snack": snack,
-        "dinner": dinner,
-        "evening_meal": evening_meal
-    }
-
-    weight = number_of_grams(result, meals["breakfast"])
+    weight = number_of_grams(result, breakfast, "breakfast")
 
     await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n"
                          f"Завтрак:\n{breakfast[0].name_dish}\n"
-                         f"Калории:{breakfast[0].calories}\n"
+                         f"Калории:\n"
                          f"Белки:\n"
                          f"Жиры:\n"
                          f"Углеводы:\n")

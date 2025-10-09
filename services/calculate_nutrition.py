@@ -1,4 +1,6 @@
-from typing import Dict
+from typing import Dict, Sequence
+
+from database.models import Breakfast
 
 
 def calculate_nutrition(data: list) -> Dict[str, int]:
@@ -37,21 +39,21 @@ def calculate_nutrition(data: list) -> Dict[str, int]:
     }
 
 
-def number_of_grams(data: dict, meals: dict):
+def number_of_grams(data: dict, meals, food_intake):
     necessary_calories = None
 
-    if meals == "breakfast":
+    if food_intake == "breakfast":
         necessary_calories = data['calories'] * 25 / 100
         # здесь считаем, что для завтрака нужно 25% от суточного потребления калорий,
         # в остальных похожий расчёт
 
-    elif meals == "snack":
+    elif food_intake == "snack":
         necessary_calories = data['calories'] * 10 / 100
 
-    elif meals == "dinner":
+    elif food_intake == "dinner":
         necessary_calories = data['calories'] * 35 / 100
 
-    elif meals == "evening_meal":
+    elif food_intake == "evening_meal":
         necessary_calories = data['calories'] * 30 / 100
 
     weight = necessary_calories / meals[0].calories * 100

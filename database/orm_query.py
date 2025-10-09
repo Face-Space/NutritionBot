@@ -3,7 +3,7 @@ import random
 from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import UserInfo, Breakfast, Snack
+from database.models import UserInfo, Breakfast, Snack, Dinner, EveningMeal
 
 
 async def orm_add_user_info(session: AsyncSession, data: dict, user_id: int):
@@ -43,3 +43,27 @@ async def orm_get_breakfast(session: AsyncSession):
 async def orm_get_snack(session: AsyncSession):
     count_result = await session.execute(select(func.count(Snack.id)))
     count = count_result.scalar_one()
+    query = select(Snack).where(Snack.id == random.randint(1, count))
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def orm_get_dinner(session: AsyncSession):
+    count_result = await session.execute(select(func.count(Dinner.id)))
+    count = count_result.scalar_one()
+    query = select(Dinner).where(Dinner.id == random.randint(1, count))
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def orm_get_evening_meal(session: AsyncSession):
+    count_result = await session.execute(select(func.count(EveningMeal.id)))
+    count = count_result.scalar_one()
+    query = select(EveningMeal).where(EveningMeal.id == random.randint(1, count))
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+
+
+
