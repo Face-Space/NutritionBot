@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from aiogram import Router, types
+from aiogram import Router, types, F
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_breakfast, \
     orm_get_snack, orm_get_dinner, orm_get_evening_meal
-from keyboards.inline import gender_kb, activity_level_kb, target_kb, num_meals_kb
+from keyboards.inline import gender_kb, activity_level_kb, target_kb, look_cooking
 from services.calculate_nutrition import calculate_nutrition, number_of_grams
 from states.FSM import UserSurvey
 
@@ -148,12 +148,11 @@ async def plan_meals(message: types.Message, session: AsyncSession):
     result = calculate_nutrition(data)
     response = (
         f"Ваш план питания:\n"
-        f"Калории в сутки: {result['calories']} ккал\n"
-        f"Белки: {result['protein_g']} г\n"
-        f"Жиры: {result['fat_g']} г\n"
-        f"Углеводы: {result['carbs_g']} г"
+        f"Калории в сутки: {result['calories']} кКал.\n"
+        f"Белки: {result['protein_g']} г.\n"
+        f"Жиры: {result['fat_g']} г.\n"
+        f"Углеводы: {result['carbs_g']} г."
     )
-
     await message.answer(response)
 
     breakfast = await orm_get_breakfast(session)
@@ -161,14 +160,33 @@ async def plan_meals(message: types.Message, session: AsyncSession):
     dinner = await orm_get_dinner(session)
     evening_meal = await orm_get_evening_meal(session)
 
-    weight = number_of_grams(result, breakfast, "breakfast")
 
-    await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n"
-                         f"Завтрак:\n{breakfast[0].name_dish}\n"
-                         f"Калории:\n"
-                         f"Белки:\n"
-                         f"Жиры:\n"
-                         f"Углеводы:\n")
+    meal_weight = number_of_grams(result, breakfast, "breakfast")
+    meal_calories = number_of_grams(result, breakfast, "breakfast", return_weight=False)
+
+    while True:
+        if meal_weight > 600:  # т.к. больше полкило еды съесть довольно трудно, берём из БД что-то калорийнее
+            breakfast = await orm_get_breakfast(session)
+            meal_weight = number_of_grams(result, breakfast, "breakfast")
+            meal_calories = number_of_grams(result, breakfast, "breakfast", return_weight=False)
+        else:
+            break
+
+
+    await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n\n"
+                         f"Завтрак:\n{breakfast[0].name_dish}.\n\n"
+                         f"Необходимое кол-во грамм в одной порции: {round(meal_weight, 1)}\n\n"
+                         f"Калории: {round(meal_calories, 1)} кКал\n"
+                         f"Белки: {round(breakfast[0].proteins * (meal_weight / 100), 1)} г.\n"
+                         f"Жиры: {round(breakfast[0].fats * (meal_weight / 100), 1)} г.\n"
+                         f"Углеводы: {round(breakfast[0].carbohydrates * (meal_weight / 100), 1)} г.\n",
+                         reply_markup=look_cooking.as_markup())
+
+
+# @user_private_router.message(F.data == "look_cooking")
+# async def look_cook(callback: types.CallbackQuery):
+#     from main import bot
+#     await bot.edit_message_tex()
 
 
 @user_private_router.message(~Command("admin"))

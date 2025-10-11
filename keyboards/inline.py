@@ -20,13 +20,12 @@ target_kb.add(InlineKeyboardButton(text="Снижение веса", callback_da
               InlineKeyboardButton(text="Набор массы", callback_data="gain"))
 
 
-num_meals_kb = InlineKeyboardBuilder()
-num_meals_kb.add(InlineKeyboardButton(text="2", callback_data="2"),
-                 InlineKeyboardButton(text="3", callback_data="3"),
-                 InlineKeyboardButton(text="4", callback_data="4"),
-                 InlineKeyboardButton(text="5", callback_data="5"))
-
-
 admin_kb = InlineKeyboardBuilder()
 admin_kb.add(InlineKeyboardButton(text="Спарсить завтрак", callback_data="parse_breakfast"))
 admin_kb.adjust(1)
+
+
+look_cooking = InlineKeyboardBuilder()
+look_cooking.add(InlineKeyboardButton(text="Как готовить?", callback_data="look_cooking"))
+look_cooking.adjust(1)
+

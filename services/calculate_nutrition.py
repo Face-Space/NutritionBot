@@ -39,7 +39,7 @@ def calculate_nutrition(data: list) -> Dict[str, int]:
     }
 
 
-def number_of_grams(data: dict, meals, food_intake):
+def number_of_grams(data: dict, meals, food_intake, return_weight = True):
     necessary_calories = None
 
     if food_intake == "breakfast":
@@ -59,6 +59,9 @@ def number_of_grams(data: dict, meals, food_intake):
     weight = necessary_calories / meals[0].calories * 100
     # считаем количество грамм за один приём пищи
 
-    return weight
+    if return_weight:
+        return weight
+
+    return necessary_calories
 
 
