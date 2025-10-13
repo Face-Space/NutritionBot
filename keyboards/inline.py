@@ -25,7 +25,13 @@ admin_kb.add(InlineKeyboardButton(text="Спарсить завтрак", callba
 admin_kb.adjust(1)
 
 
-look_cooking = InlineKeyboardBuilder()
-look_cooking.add(InlineKeyboardButton(text="Как готовить?", callback_data="look_cooking"))
-look_cooking.adjust(1)
+def look_cooking_kb(dish_id: int, model_type: str) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(text="Как готовить?", callback_data=f"look_cooking:{dish_id}:{model_type}"))
+    kb.adjust(1)
+    return kb
 
+
+back_to_dish_info = InlineKeyboardBuilder()
+back_to_dish_info.add(InlineKeyboardButton(text="Назад", callback_data="back_to_dish_info"))
+back_to_dish_info.adjust(1)

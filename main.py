@@ -22,9 +22,9 @@ from utils.logger import setup_logging
 from common.bot_cmds_list import private
 from filters.chat_types import admins_list
 from handlers.user_private import user_private_router
+from bot_setup import bot
 
 
-bot = Bot(token=os.getenv("TOKEN"))
 dp = Dispatcher()
 
 

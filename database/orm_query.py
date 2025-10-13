@@ -32,37 +32,21 @@ async def orm_delete_user_info(session: AsyncSession, user_id: int):
     await session.commit()
 
 
-async def orm_get_breakfast(session: AsyncSession):
-    count_result = await session.execute(select(func.count(Breakfast.id)))
-    count = count_result.scalar_one()
-    query = select(Breakfast).where(Breakfast.id == random.randint(1, count))
+async def orm_get_random_dish(session: AsyncSession, model):
+    query = select(model).order_by(func.random()).limit(1)
+    # так гарантированно получим одну случайную запись из таблицы, вне зависимости от порядка или пропусков в id
     result = await session.execute(query)
     return result.scalars().all()
 
 
-async def orm_get_snack(session: AsyncSession):
-    count_result = await session.execute(select(func.count(Snack.id)))
-    count = count_result.scalar_one()
-    query = select(Snack).where(Snack.id == random.randint(1, count))
+async def orm_get_dish_by_id(session: AsyncSession, model, dish_id):
+    query = select(model).where(model.id == int(dish_id))
     result = await session.execute(query)
     return result.scalars().all()
 
 
-async def orm_get_dinner(session: AsyncSession):
-    count_result = await session.execute(select(func.count(Dinner.id)))
-    count = count_result.scalar_one()
-    query = select(Dinner).where(Dinner.id == random.randint(1, count))
-    result = await session.execute(query)
-    return result.scalars().all()
-
-
-async def orm_get_evening_meal(session: AsyncSession):
-    count_result = await session.execute(select(func.count(EveningMeal.id)))
-    count = count_result.scalar_one()
-    query = select(EveningMeal).where(EveningMeal.id == random.randint(1, count))
-    result = await session.execute(query)
-    return result.scalars().all()
-
+# async def orm_get_dish_by_id(session: AsyncSession, table_name, dish_id: int):
+#     query = select(table_name).where(table_name.id == int(dish_id))
 
 
 
