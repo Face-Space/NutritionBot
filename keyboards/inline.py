@@ -21,7 +21,7 @@ target_kb.add(InlineKeyboardButton(text="Снижение веса", callback_da
 
 
 admin_kb = InlineKeyboardBuilder()
-admin_kb.add(InlineKeyboardButton(text="Спарсить завтрак", callback_data="parse_breakfast"))
+admin_kb.add(InlineKeyboardButton(text="Спарсить всё", callback_data="parse_breakfast"))
 admin_kb.adjust(1)
 
 

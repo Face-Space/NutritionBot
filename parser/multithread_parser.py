@@ -21,6 +21,8 @@ headers = {
     Chrome/134.0.0.0 Safari/537.36"
 }
 current_path = Path(__file__).parent / "html_data"
+meals = [EveningMeal, Snack, Breakfast, Dinner]  # порядок записи данных в таблицы,
+                                                 # относительно их расположения на странице
 
 
 def _save_page(content: str, filename: str):
@@ -32,10 +34,6 @@ def _save_page(content: str, filename: str):
 def _load_page(filename: str) -> str:
     with open(filename, encoding="utf-8") as file:
         return file.read()
-
-
-meals = [EveningMeal, Snack, Breakfast, Dinner]  # порядок записи данных в таблицы,
-                                                 # относительно их расположения на странице
 
 
 async def _bulk_insert(data_list, time_eat):
@@ -66,8 +64,7 @@ def _fetch_product_data(products_tds):
     description = desc_soup.find(class_="mzr-recipe-view-description-tc").text.strip()
 
     try:
-        print(f'Инфа с "{dish_name}" успешно собрана')
-        return {
+        data = {
             "name_dish": dish_name,
             "calories": float(calories),
             "proteins": float(proteins),
@@ -76,9 +73,17 @@ def _fetch_product_data(products_tds):
             "description": description
         }
 
+        # Оставляем только непустые поля
+        if all(val not in (None, '', 0) for val in data.values()):
+            logger.info(f'Инфа с "{dish_name}" успешно собрана!')
+            print(f'Инфа с "{dish_name}" успешно собрана!')
+            return data
+        else:
+            return
+
     except ValueError as e:
         logger.info(f"Ошибка, информация о продукте не собрана: {e}")
-        return None
+        return
 
 
 def _get_categories(src):

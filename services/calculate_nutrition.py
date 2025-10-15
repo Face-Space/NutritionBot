@@ -1,7 +1,9 @@
 from typing import Dict, Sequence
-
 from database.models import Breakfast
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 def calculate_nutrition(data: list) -> Dict[str, int]:
     user_info = data[0]
@@ -56,12 +58,17 @@ def number_of_grams(data: dict, meals, food_intake, return_weight = True):
     elif food_intake == "evening_meal":
         necessary_calories = data['calories'] * 30 / 100
 
-    weight = necessary_calories / meals[0].calories * 100
-    # считаем количество грамм за один приём пищи
+    try:
+        weight = necessary_calories / meals[0].calories * 100
+        # считаем количество грамм за один приём пищи
+        if return_weight:
+            return weight
 
-    if return_weight:
-        return weight
+        return necessary_calories
 
-    return necessary_calories
+    except ZeroDivisionError as e:
+        logger.error("Ошибка, в БД калорийность продукта 0 калорий!")
+
+
 
 

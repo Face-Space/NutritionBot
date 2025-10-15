@@ -27,8 +27,8 @@ async def start_changes(message: types.Message, state: FSMContext):
 @admin_router.callback_query(F.data == "parse_breakfast")
 async def parse_breakfast(callback: CallbackQuery):
     await callback.answer()
-    await callback.message.answer("Идёт парсинг завтрака в БД, обычно это занимает около 10 минут, пожалуйста подождите")
+    await callback.message.answer("Идёт парсинг в БД, обычно это занимает около 10 минут, пожалуйста подождите")
     await scrape_and_store()
-    await callback.message.answer("Парсинг завтрака в БД успешно окончен, можете тестировать")
+    await callback.message.answer("Парсинг успешно окончен, можете тестировать")
 
 
