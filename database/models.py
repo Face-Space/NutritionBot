@@ -38,10 +38,10 @@ class Snack(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name_dish: Mapped[str] = mapped_column(Text)
-    calories: Mapped[int] = mapped_column(Float)
-    proteins: Mapped[int] = mapped_column(Float)
-    fats: Mapped[int] = mapped_column(Float)
-    carbohydrates: Mapped[int] = mapped_column(Float)
+    calories: Mapped[float] = mapped_column(Float)
+    proteins: Mapped[float] = mapped_column(Float)
+    fats: Mapped[float] = mapped_column(Float)
+    carbohydrates: Mapped[float] = mapped_column(Float)
     description: Mapped[str] = mapped_column(Text)
 
 
@@ -50,10 +50,10 @@ class Dinner(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name_dish: Mapped[str] = mapped_column(Text)
-    calories: Mapped[int] = mapped_column(Float)
-    proteins: Mapped[int] = mapped_column(Float)
-    fats: Mapped[int] = mapped_column(Float)
-    carbohydrates: Mapped[int] = mapped_column(Float)
+    calories: Mapped[float] = mapped_column(Float)
+    proteins: Mapped[float] = mapped_column(Float)
+    fats: Mapped[float] = mapped_column(Float)
+    carbohydrates: Mapped[float] = mapped_column(Float)
     description: Mapped[str] = mapped_column(Text)
 
 
@@ -62,8 +62,21 @@ class EveningMeal(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name_dish: Mapped[str] = mapped_column(Text)
-    calories: Mapped[int] = mapped_column(Float)
-    proteins: Mapped[int] = mapped_column(Float)
-    fats: Mapped[int] = mapped_column(Float)
-    carbohydrates: Mapped[int] = mapped_column(Float)
+    calories: Mapped[float] = mapped_column(Float)
+    proteins: Mapped[float] = mapped_column(Float)
+    fats: Mapped[float] = mapped_column(Float)
+    carbohydrates: Mapped[float] = mapped_column(Float)
     description: Mapped[str] = mapped_column(Text)
+
+
+class TemporaryStorage(Base):
+    __tablename__ = "temporary_storage"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(unique=True)
+    message_meal_name: Mapped[str] = mapped_column(String(10))
+    meal_info: Mapped[str] = mapped_column(Text)
+    meal_weight: Mapped[float] = mapped_column(Float)
+    meal_calories: Mapped[float] = mapped_column(Float)
+    food_intake: Mapped[str] = mapped_column(String(15))
+

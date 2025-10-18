@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import json
 
 from aiogram import Router, types, F
 from aiogram.filters import CommandStart, Command
@@ -9,10 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Breakfast, Snack, Dinner, EveningMeal
 from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_random_dish, \
-    orm_get_dish_by_id
+    orm_get_dish_by_id, orm_save_temporary_info, orm_get_and_delete_info
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, look_cooking_kb, back_to_dish_info
 from services.calculate_nutrition import calculate_nutrition, number_of_grams
-from states.FSM import UserSurvey
+from states.FSM import UserSurvey, DishInfo
 from bot_setup import bot
 
 logger = logging.getLogger(__name__)
@@ -148,7 +149,7 @@ async def plan_meals(message: types.Message, session: AsyncSession):
     await plan_meal(message, session, Breakfast, "breakfast", "Завтрак", first_sending=True)
     await plan_meal(message, session, Dinner, "dinner", "Обед")
     await plan_meal(message, session, Snack, "snack", "Перекус")
-    await plan_meal(message, session, Breakfast, "evening_meal", "Ужин")
+    await plan_meal(message, session, EveningMeal, "evening_meal", "Ужин")
 
 
 
@@ -191,29 +192,86 @@ async def plan_meal(message: types.Message, session: AsyncSession, model, food_i
                          reply_markup=look_cooking_kb(meal_name[0].id, food_intake).as_markup())
 
 
+    # UserSurvey.necessary_vars["message_meal_name"] = message_meal_name
+    # UserSurvey.necessary_vars["meal_name"] = meal_name
+    # UserSurvey.necessary_vars["meal_calories"] = meal_calories
+    # UserSurvey.necessary_vars["meal_weight"] = meal_weight
+    # UserSurvey.necessary_vars["food_intake"] = food_intake
+
+    meal_info = {
+        "name_dish": meal_name[0].name_dish,
+        "proteins": meal_name[0].proteins,
+        "fats": meal_name[0].fats,
+        "carbohydrates": meal_name[0].carbohydrates
+    }
+
+    meal_info_json = json.dumps(meal_info)
+    # перед сохранением преобразуем в JSON строку, т.к. SQLite не умеет автоматически сериализовать сложные объекты,
+    # такие как словари, и требует примитивные типы: строки, числа и т.п
+
+    data = {
+        "message_meal_name": message_meal_name,
+        "meal_info": meal_info_json,
+        "meal_calories": meal_calories,
+        "meal_weight": meal_weight,
+        "food_intake": food_intake
+    }
+
+    await orm_save_temporary_info(session, data, message.from_user.id)
+
+
 @user_private_router.callback_query(F.data.startswith("look_cooking:"))
 async def look_cook(callback: types.CallbackQuery, session: AsyncSession):
-    model = None
-
     dish_id = int(callback.data.split(":")[1])
     model_type = str(callback.data.split(":")[2])
-    if model_type == "breakfast":
-        model = Breakfast
-    elif model_type == "snack":
-        model = Snack
-    elif model_type == "dinner":
-        model = Dinner
-    elif model_type == "evening_meal":
-        model = EveningMeal
-    else:
-        print("Ошибка!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
+    model = {
+        "breakfast": Breakfast,
+        "snack": Snack,
+        "dinner": Dinner,
+        "evening_meal": EveningMeal
+    }.get(model_type)
 
     meal = await orm_get_dish_by_id(session, model, dish_id)
-    await callback.message.answer(text=f'Приготовление блюда "{meal[0].name_dish}":\n\n'
-                                       f'{meal[0].description}')
+    # await callback.message.answer(text=f'Приготовление блюда "{meal[0].name_dish}":\n\n'
+    #                                    f'{meal[0].description}')
+
+    # await state.update_data(
+    #     message_meal_name=UserSurvey.necessary_vars.get("message_meal_name"),
+    #     meal_name=UserSurvey.necessary_vars.get("meal_name"),
+    #     meal_weight=UserSurvey.necessary_vars.get("meal_weight"),
+    #     meal_calories=UserSurvey.necessary_vars.get("meal_calories"),
+    #     food_intake=UserSurvey.necessary_vars.get("food_intake")
+    # )
+
+    await bot.edit_message_text(text=f'Приготовление блюда "{meal[0].name_dish}":\n\n'
+                                        f'{meal[0].description}',
+                                chat_id=callback.message.chat.id,
+                                message_id=callback.message.message_id,
+                                reply_markup=back_to_dish_info.as_markup())
     await callback.answer()
 
+
+
+@user_private_router.callback_query(F.data == "back_to_dish_info")
+async def back_handler(callback: types.CallbackQuery, session: AsyncSession):
+    data = await orm_get_and_delete_info(session, callback.message.from_user.id)
+    meal_info = json.loads(data[0].meal_info)
+
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", data)
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", meal_info)
+
+    await bot.edit_message_text(text=f"{data['message_meal_name']}:\n{meal_info["name_dish"]}.\n\n"
+                         f"Необходимое кол-во грамм в одной порции: {round(data['meal_weight'], 1)}\n\n"
+                         f"Калории: {round(data['meal_calories'], 1)} кКал.\n"
+                         f"Белки: {round(meal_info["proteins"] * (data['meal_weight'] / 100), 1)} г.\n"
+                         f"Жиры: {round(meal_info["fats"] * (data['meal_weight'] / 100), 1)} г.\n"
+                         f"Углеводы: {round(meal_info["carbohydrates"] * (data['meal_weight'] / 100), 1)} г.\n",
+                         chat_id=callback.message.chat.id,
+                         message_id=callback.message.message_id,
+                         reply_markup=look_cooking_kb(data['meal_name'][0].id, data['food_intake']).as_markup())
+
+    await callback.answer()
 
 
 @user_private_router.message(~Command("admin"))

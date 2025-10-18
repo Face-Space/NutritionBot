@@ -9,3 +9,9 @@ class UserSurvey(StatesGroup):
     activity_level = State()
     target = State()
     food_prohibitions = State()
+
+    necessary_vars = {}
+
+
+class DishInfo(StatesGroup):
+    viewing = State()
