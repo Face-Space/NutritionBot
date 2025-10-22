@@ -10,10 +10,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Breakfast, Snack, Dinner, EveningMeal
 from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_random_dish, \
-    orm_get_dish_by_id, orm_save_temporary_info, orm_get_and_delete_info
+    orm_get_dish_by_id, orm_save_temporary_info, orm_get_temporary_dish_info, orm_delete_temporary_dish
 from keyboards.inline import gender_kb, activity_level_kb, target_kb, look_cooking_kb, back_to_dish_info
 from services.calculate_nutrition import calculate_nutrition, number_of_grams
-from states.FSM import UserSurvey, DishInfo
+from states.FSM import UserSurvey
 from bot_setup import bot
 
 logger = logging.getLogger(__name__)
@@ -21,24 +21,31 @@ user_private_router = Router()
 
 
 @user_private_router.message(CommandStart())
-async def start_bot(message: types.Message, state: FSMContext):
+async def start_bot(message: types.Message, session: AsyncSession):
+
+    await orm_delete_temporary_dish(session, message.from_user.id)
+    # очищаем временное хранилище в БД перед запуском
+
     await message.answer("Привет 👋, я - NutritionBot 🤖, бот, для управления питанием с нестандартным подходом "
-                         "к планированию рациона ")
+                         "к планированию рациона 🥙\n")
     await asyncio.sleep(2)
-    await message.answer("Я помогу вам контролировать свой вес, подбирая план питания без жестких ограничений")
+    await message.answer("Я помогу вам контролировать свой вес, подбирая план питания 🥕 без жестких ограничений\n")
     await asyncio.sleep(2)
     await message.answer("Выберите, чтобы вы хотели сделать:\n"
-                         "/start - Запуск/Перезапуск бота\n"
-                         "/set_params - Установка индивидуальных параметров (возраст, вес, цель и т.д.)\n"
-                         "/add_product - Добавление продуктов в базу пользователя\n"
-                         "/plan_meals - Генерация плана питания\n"
-                         "/payment - Тарифы")
+                         "/start - Запуск/Перезапуск бота ▶️\n"
+                         "/set_params - Установка индивидуальных параметров 📝 (возраст, вес, цель и т.д.)\n"
+                         "/plan_meals - Генерация плана питания 🍍\n"
+                         "/payment - Тарифы 💲")
 
 
 # ---------------------------------/set_params/---------------------------------------------
 
 @user_private_router.message(Command("set_params"))
-async def set_params(message: types.Message, state: FSMContext):
+async def set_params(message: types.Message, state: FSMContext, session: AsyncSession):
+
+    await orm_delete_temporary_dish(session, message.from_user.id)
+    # очищаем временное хранилище в БД перед запуском
+
     await message.answer("Отлично, давайте перейдём к делу")
     await asyncio.sleep(2)
     await message.answer("Сейчас я задам несколько вопросов, чтобы составить план конкретно под вас")
@@ -146,11 +153,14 @@ async def food_prohibitions(message: types.Message, state: FSMContext, session: 
 
 @user_private_router.message(Command("plan_meals"))
 async def plan_meals(message: types.Message, session: AsyncSession):
+
+    await orm_delete_temporary_dish(session, message.from_user.id)
+    # очищаем временное хранилище в БД перед запуском
+
     await plan_meal(message, session, Breakfast, "breakfast", "Завтрак", first_sending=True)
     await plan_meal(message, session, Dinner, "dinner", "Обед")
     await plan_meal(message, session, Snack, "snack", "Перекус")
     await plan_meal(message, session, EveningMeal, "evening_meal", "Ужин")
-
 
 
 async def plan_meal(message: types.Message, session: AsyncSession, model, food_intake: str,
@@ -160,15 +170,14 @@ async def plan_meal(message: types.Message, session: AsyncSession, model, food_i
     result = calculate_nutrition(data)
 
     if first_sending:
+        await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n\n")
         response = (
-            f"Ваш план питания:\n"
             f"Калории в сутки: {result['calories']} кКал.\n"
             f"Белки: {result['protein_g']} г.\n"
             f"Жиры: {result['fat_g']} г.\n"
             f"Углеводы: {result['carbs_g']} г."
         )
         await message.answer(response)
-        await message.answer(f"Вот ваш рацион питания на сегодня с учётом необходимых для вас калорий:\n\n")
 
     meal_name = await orm_get_random_dish(session, model)
     meal_weight = number_of_grams(result, meal_name, food_intake)
@@ -191,15 +200,9 @@ async def plan_meal(message: types.Message, session: AsyncSession, model, food_i
                          f"Углеводы: {round(meal_name[0].carbohydrates * (meal_weight / 100), 1)} г.\n",
                          reply_markup=look_cooking_kb(meal_name[0].id, food_intake).as_markup())
 
-
-    # UserSurvey.necessary_vars["message_meal_name"] = message_meal_name
-    # UserSurvey.necessary_vars["meal_name"] = meal_name
-    # UserSurvey.necessary_vars["meal_calories"] = meal_calories
-    # UserSurvey.necessary_vars["meal_weight"] = meal_weight
-    # UserSurvey.necessary_vars["food_intake"] = food_intake
-
     meal_info = {
         "name_dish": meal_name[0].name_dish,
+        "dish_id": meal_name[0].id,
         "proteins": meal_name[0].proteins,
         "fats": meal_name[0].fats,
         "carbohydrates": meal_name[0].carbohydrates
@@ -233,43 +236,29 @@ async def look_cook(callback: types.CallbackQuery, session: AsyncSession):
     }.get(model_type)
 
     meal = await orm_get_dish_by_id(session, model, dish_id)
-    # await callback.message.answer(text=f'Приготовление блюда "{meal[0].name_dish}":\n\n'
-    #                                    f'{meal[0].description}')
-
-    # await state.update_data(
-    #     message_meal_name=UserSurvey.necessary_vars.get("message_meal_name"),
-    #     meal_name=UserSurvey.necessary_vars.get("meal_name"),
-    #     meal_weight=UserSurvey.necessary_vars.get("meal_weight"),
-    #     meal_calories=UserSurvey.necessary_vars.get("meal_calories"),
-    #     food_intake=UserSurvey.necessary_vars.get("food_intake")
-    # )
-
     await bot.edit_message_text(text=f'Приготовление блюда "{meal[0].name_dish}":\n\n'
                                         f'{meal[0].description}',
                                 chat_id=callback.message.chat.id,
                                 message_id=callback.message.message_id,
-                                reply_markup=back_to_dish_info.as_markup())
+                                reply_markup=back_to_dish_info(model_type).as_markup())
     await callback.answer()
 
 
-
-@user_private_router.callback_query(F.data == "back_to_dish_info")
+@user_private_router.callback_query(F.data.startswith("back_to_dish_info"))
 async def back_handler(callback: types.CallbackQuery, session: AsyncSession):
-    data = await orm_get_and_delete_info(session, callback.message.from_user.id)
+    food_intake = callback.data.split(":")[1]
+    data = await orm_get_temporary_dish_info(session, callback.from_user.id, food_intake)
     meal_info = json.loads(data[0].meal_info)
 
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", data)
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!", meal_info)
-
-    await bot.edit_message_text(text=f"{data['message_meal_name']}:\n{meal_info["name_dish"]}.\n\n"
-                         f"Необходимое кол-во грамм в одной порции: {round(data['meal_weight'], 1)}\n\n"
-                         f"Калории: {round(data['meal_calories'], 1)} кКал.\n"
-                         f"Белки: {round(meal_info["proteins"] * (data['meal_weight'] / 100), 1)} г.\n"
-                         f"Жиры: {round(meal_info["fats"] * (data['meal_weight'] / 100), 1)} г.\n"
-                         f"Углеводы: {round(meal_info["carbohydrates"] * (data['meal_weight'] / 100), 1)} г.\n",
+    await bot.edit_message_text(text=f"{data[0].message_meal_name}:\n{meal_info["name_dish"]}.\n\n"
+                         f"Необходимое кол-во грамм в одной порции: {round(data[0].meal_weight, 1)}\n\n"
+                         f"Калории: {round(data[0].meal_calories, 1)} кКал.\n"
+                         f"Белки: {round(meal_info["proteins"] * (data[0].meal_weight / 100), 1)} г.\n"
+                         f"Жиры: {round(meal_info["fats"] * (data[0].meal_weight / 100), 1)} г.\n"
+                         f"Углеводы: {round(meal_info["carbohydrates"] * (data[0].meal_weight / 100), 1)} г.\n",
                          chat_id=callback.message.chat.id,
                          message_id=callback.message.message_id,
-                         reply_markup=look_cooking_kb(data['meal_name'][0].id, data['food_intake']).as_markup())
+                         reply_markup=look_cooking_kb(meal_info["dish_id"], data[0].food_intake).as_markup())
 
     await callback.answer()
 
@@ -277,15 +266,6 @@ async def back_handler(callback: types.CallbackQuery, session: AsyncSession):
 @user_private_router.message(~Command("admin"))
 async def trash_remove(message: types.Message):
     await message.delete()
-
-
-
-
-
-
-
-
-
 
 
 

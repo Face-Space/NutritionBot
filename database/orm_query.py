@@ -1,9 +1,7 @@
-import random
-
 from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import UserInfo, Breakfast, Snack, Dinner, EveningMeal, TemporaryStorage
+from database.models import UserInfo, TemporaryStorage
 
 
 async def orm_add_user_info(session: AsyncSession, data: dict, user_id: int):
@@ -56,15 +54,14 @@ async def orm_save_temporary_info(session: AsyncSession, data: dict, user_id: in
     ))
     await session.commit()
 
-# async def orm_get_dish_by_id(session: AsyncSession, table_name, dish_id: int):
-#     query = select(table_name).where(table_name.id == int(dish_id))
+
+async def orm_get_temporary_dish_info(session: AsyncSession, user_id: int, food_intake: str):
+    query = select(TemporaryStorage).where(TemporaryStorage.user_id == int(user_id), TemporaryStorage.food_intake == str(food_intake))
+    result = await session.execute(query)
+    return result.scalars().all()
 
 
-async def orm_get_and_delete_info(session: AsyncSession, user_id: int):
-    result = await session.execute(select(TemporaryStorage).where(TemporaryStorage.user_id == int(user_id)))
-    records = result.scalars().all()
-    if records:
-        await session.execute(delete(TemporaryStorage).where(TemporaryStorage.user_id == int(user_id)))
-        await session.commit()
-    return records
-
+async def orm_delete_temporary_dish(session: AsyncSession, user_id: int):
+    query = delete(TemporaryStorage).where(TemporaryStorage.user_id == int(user_id))
+    await session.execute(query)
+    await session.commit()

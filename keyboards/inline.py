@@ -32,6 +32,9 @@ def look_cooking_kb(dish_id: int, model_type: str) -> InlineKeyboardBuilder:
     return kb
 
 
-back_to_dish_info = InlineKeyboardBuilder()
-back_to_dish_info.add(InlineKeyboardButton(text="Назад", callback_data="back_to_dish_info"))
-back_to_dish_info.adjust(1)
+def back_to_dish_info(food_intake: str) -> InlineKeyboardBuilder:
+    kb = InlineKeyboardBuilder()
+    kb.add(InlineKeyboardButton(text="Назад", callback_data=f"back_to_dish_info:{food_intake}"))
+    kb.adjust(1)
+    return kb
+

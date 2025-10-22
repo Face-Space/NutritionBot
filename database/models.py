@@ -73,7 +73,7 @@ class TemporaryStorage(Base):
     __tablename__ = "temporary_storage"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(unique=True)
+    user_id: Mapped[int] = mapped_column()
     message_meal_name: Mapped[str] = mapped_column(String(10))
     meal_info: Mapped[str] = mapped_column(Text)
     meal_weight: Mapped[float] = mapped_column(Float)
