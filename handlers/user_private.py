@@ -1,50 +1,60 @@
 import asyncio
 import logging
 import json
+import os
 
 from aiogram import Router, types, F
 from aiogram.filters import CommandStart, Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, LabeledPrice, PreCheckoutQuery
 from sqlalchemy.ext.asyncio import AsyncSession
+from dotenv import load_dotenv, find_dotenv
 
 from database.models import Breakfast, Snack, Dinner, EveningMeal
-from database.orm_query import orm_add_user_info, orm_get_user_info, orm_delete_user_info, orm_get_random_dish, \
-    orm_get_dish_by_id, orm_save_temporary_info, orm_get_temporary_dish_info, orm_delete_temporary_dish
-from keyboards.inline import gender_kb, activity_level_kb, target_kb, look_cooking_kb, back_to_dish_info
+from database.orm_query import *
+from keyboards.inline import *
 from services.calculate_nutrition import calculate_nutrition, number_of_grams
 from states.FSM import UserSurvey
 from bot_setup import bot
 
+
 logger = logging.getLogger(__name__)
 user_private_router = Router()
+payment_router = Router()
+load_dotenv(find_dotenv())
 
 
 @user_private_router.message(CommandStart())
 async def start_bot(message: types.Message, session: AsyncSession):
-
-    await orm_delete_temporary_dish(session, message.from_user.id)
-    # очищаем временное хранилище в БД перед запуском
-
     await message.answer("Привет 👋, я - NutritionBot 🤖, бот, для управления питанием с нестандартным подходом "
                          "к планированию рациона 🥙\n")
-    await asyncio.sleep(2)
+    await asyncio.sleep(1.5)
     await message.answer("Я помогу вам контролировать свой вес, подбирая план питания 🥕 без жестких ограничений\n")
-    await asyncio.sleep(2)
-    await message.answer("Выберите, чтобы вы хотели сделать:\n"
+    await asyncio.sleep(1.5)
+    await message.answer("Выберите, чтобы вы хотели сделать:\n\n"
                          "/start - Запуск/Перезапуск бота ▶️\n"
                          "/set_params - Установка индивидуальных параметров 📝 (возраст, вес, цель и т.д.)\n"
                          "/plan_meals - Генерация плана питания 🍍\n"
-                         "/payment - Тарифы 💲")
+                         "/tariffs - Тарифы")
+
+
+# Перед оплатой Telegram вызывает этот обработчик
+@user_private_router.pre_checkout_query()
+async def pre_checkout_q(pre_checkout_query: PreCheckoutQuery):
+    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+
+
+# Успешная оплата — Telegram отправляет ContentType.SUCCESSFUL_PAYMENT
+@user_private_router.message(F.successful_payment)
+async def successful_payment(message: types.Message, session: AsyncSession):
+    await orm_mark_user_paid(session, message.from_user.id)
+    await message.answer("Спасибо за оплату! \nТеперь доступ открыт ✅. \nДля перезапуска нажмите /start")
 
 
 # ---------------------------------/set_params/---------------------------------------------
 
 @user_private_router.message(Command("set_params"))
 async def set_params(message: types.Message, state: FSMContext, session: AsyncSession):
-
-    await orm_delete_temporary_dish(session, message.from_user.id)
-    # очищаем временное хранилище в БД перед запуском
 
     await message.answer("Отлично, давайте перейдём к делу")
     await asyncio.sleep(2)
@@ -154,9 +164,6 @@ async def food_prohibitions(message: types.Message, state: FSMContext, session: 
 @user_private_router.message(Command("plan_meals"))
 async def plan_meals(message: types.Message, session: AsyncSession):
 
-    await orm_delete_temporary_dish(session, message.from_user.id)
-    # очищаем временное хранилище в БД перед запуском
-
     await plan_meal(message, session, Breakfast, "breakfast", "Завтрак", first_sending=True)
     await plan_meal(message, session, Dinner, "dinner", "Обед")
     await plan_meal(message, session, Snack, "snack", "Перекус")
@@ -225,6 +232,7 @@ async def plan_meal(message: types.Message, session: AsyncSession, model, food_i
 
 @user_private_router.callback_query(F.data.startswith("look_cooking:"))
 async def look_cook(callback: types.CallbackQuery, session: AsyncSession):
+    await callback.answer()
     dish_id = int(callback.data.split(":")[1])
     model_type = str(callback.data.split(":")[2])
 
@@ -241,11 +249,11 @@ async def look_cook(callback: types.CallbackQuery, session: AsyncSession):
                                 chat_id=callback.message.chat.id,
                                 message_id=callback.message.message_id,
                                 reply_markup=back_to_dish_info(model_type).as_markup())
-    await callback.answer()
 
 
 @user_private_router.callback_query(F.data.startswith("back_to_dish_info"))
 async def back_handler(callback: types.CallbackQuery, session: AsyncSession):
+    await callback.answer()
     food_intake = callback.data.split(":")[1]
     data = await orm_get_temporary_dish_info(session, callback.from_user.id, food_intake)
     meal_info = json.loads(data[0].meal_info)
@@ -259,8 +267,6 @@ async def back_handler(callback: types.CallbackQuery, session: AsyncSession):
                          chat_id=callback.message.chat.id,
                          message_id=callback.message.message_id,
                          reply_markup=look_cooking_kb(meal_info["dish_id"], data[0].food_intake).as_markup())
-
-    await callback.answer()
 
 
 @user_private_router.message(~Command("admin"))

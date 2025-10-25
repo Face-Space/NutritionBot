@@ -80,3 +80,10 @@ class TemporaryStorage(Base):
     meal_calories: Mapped[float] = mapped_column(Float)
     food_intake: Mapped[str] = mapped_column(String(15))
 
+
+class PaidUsers(Base):
+    __tablename__ = "paid_users"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(unique=True)
+

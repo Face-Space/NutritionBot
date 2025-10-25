@@ -1,5 +1,4 @@
-from typing import Dict, Sequence
-from database.models import Breakfast
+from typing import Dict
 import logging
 
 

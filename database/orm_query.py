@@ -1,7 +1,7 @@
 from sqlalchemy import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import UserInfo, TemporaryStorage
+from database.models import UserInfo, TemporaryStorage, PaidUsers
 
 
 async def orm_add_user_info(session: AsyncSession, data: dict, user_id: int):
@@ -65,3 +65,15 @@ async def orm_delete_temporary_dish(session: AsyncSession, user_id: int):
     query = delete(TemporaryStorage).where(TemporaryStorage.user_id == int(user_id))
     await session.execute(query)
     await session.commit()
+
+
+async def orm_get_paid_users(session: AsyncSession, user_id: int):
+    query = select(PaidUsers).where(PaidUsers.user_id == int(user_id))
+    result = await session.execute(query)
+    return result.scalars().all()
+
+
+async def orm_mark_user_paid(session: AsyncSession, user_id: int):
+    session.add(PaidUsers(user_id=int(user_id)))
+    await session.commit()
+
