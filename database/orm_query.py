@@ -1,4 +1,5 @@
 from sqlalchemy import select, delete, func
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import UserInfo, TemporaryStorage, PaidUsers
@@ -74,6 +75,10 @@ async def orm_get_paid_users(session: AsyncSession, user_id: int):
 
 
 async def orm_mark_user_paid(session: AsyncSession, user_id: int):
-    session.add(PaidUsers(user_id=int(user_id)))
+    query = insert(PaidUsers).values(user_id=int(user_id)).on_conflict_do_update(
+        index_elements=['user_id'],  # какие поля обновлять
+        set_={'user_id': int(user_id)}  # какие значения вставлять при совпадении
+    )
+    await session.execute(query)
     await session.commit()
 

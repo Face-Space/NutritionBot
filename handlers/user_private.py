@@ -25,7 +25,8 @@ load_dotenv(find_dotenv())
 
 
 @user_private_router.message(CommandStart())
-async def start_bot(message: types.Message, session: AsyncSession):
+async def start_bot(message: types.Message, session: AsyncSession, state: FSMContext):
+    await state.clear()
     await message.answer("Привет 👋, я - NutritionBot 🤖, бот, для управления питанием с нестандартным подходом "
                          "к планированию рациона 🥙\n")
     await asyncio.sleep(1.5)
@@ -35,7 +36,18 @@ async def start_bot(message: types.Message, session: AsyncSession):
                          "/start - Запуск/Перезапуск бота ▶️\n"
                          "/set_params - Установка индивидуальных параметров 📝 (возраст, вес, цель и т.д.)\n"
                          "/plan_meals - Генерация плана питания 🍍\n"
-                         "/tariffs - Тарифы")
+                         "/payment - Тарифы")
+
+
+@user_private_router.callback_query(F.data == "cancel")
+async def back_to_menu(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.answer()
+    await callback.message.answer("Выберите, чтобы вы хотели сделать:\n\n"
+                         "/start - Запуск/Перезапуск бота ▶️\n"
+                         "/set_params - Установка индивидуальных параметров 📝 (возраст, вес, цель и т.д.)\n"
+                         "/plan_meals - Генерация плана питания 🍍\n"
+                         "/payment - Тарифы")
 
 
 # Перед оплатой Telegram вызывает этот обработчик
@@ -55,12 +67,13 @@ async def successful_payment(message: types.Message, session: AsyncSession):
 
 @user_private_router.message(Command("set_params"))
 async def set_params(message: types.Message, state: FSMContext, session: AsyncSession):
-
-    await message.answer("Отлично, давайте перейдём к делу")
-    await asyncio.sleep(2)
-    await message.answer("Сейчас я задам несколько вопросов, чтобы составить план конкретно под вас")
-    await asyncio.sleep(2)
-    await message.answer("Для начала укажите свой возраст цифрами и без букв:")
+    await state.clear()
+    await message.answer("Отлично, давайте перейдём к делу.")
+    await asyncio.sleep(1.5)
+    await message.answer("Сейчас я задам несколько вопросов, чтобы составить план конкретно под вас.")
+    await asyncio.sleep(1.5)
+    await message.answer("Для начала укажите свой возраст цифрами и без букв либо нажмите отмена, "
+                         "чтобы выйти в главное меню:", reply_markup=cancel_kb.as_markup())
     await state.set_state(UserSurvey.age)
 
 
@@ -85,7 +98,8 @@ async def ask_age(message: types.Message, state: FSMContext):
 @user_private_router.callback_query(UserSurvey.gender)
 async def ask_gender(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
-    await callback.message.answer("Отлично, укажите свой рост цифрами в сантиметрах, без букв и символов:")
+    await callback.message.answer("Отлично, укажите свой рост цифрами в сантиметрах, без букв и символов:",
+                                  reply_markup=cancel_kb.as_markup())
     await state.update_data(gender=callback.data)
     await state.set_state(UserSurvey.height)
 
@@ -103,7 +117,7 @@ async def ask_height(message: types.Message, state: FSMContext):
         await message.answer("Введите свой рост только цифрами и без лишних символов:")
         return
 
-    await message.answer("Теперь введите свой вес:")
+    await message.answer("Теперь введите свой вес:", reply_markup=cancel_kb.as_markup())
     await state.update_data(height=message.text)
     await state.set_state(UserSurvey.weight)
 
@@ -119,6 +133,7 @@ async def ask_weight(message: types.Message, state: FSMContext):
 
     except ValueError:
         await message.answer("Введите свой вес только цифрами и без лишних символов.")
+
         return
 
     await message.answer("По вашим ощущениям, какой ваш уровень физической активности:",
@@ -139,7 +154,7 @@ async def activity_level(callback: CallbackQuery, state: FSMContext):
 async def num_meals(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
     await callback.message.answer("Напишите какие у вас есть противопоказания или заболевания "
-                                  "(аллергия, диабет, проблемы ЖКТ и т.д.)")
+                                  "(аллергия, диабет, проблемы ЖКТ и т.д.)", reply_markup=cancel_kb.as_markup())
     await state.update_data(num_meals=callback.data)
     await state.set_state(UserSurvey.food_prohibitions)
 
@@ -155,15 +170,16 @@ async def food_prohibitions(message: types.Message, state: FSMContext, session: 
 
     await orm_add_user_info(session, data, user_id)
     await message.answer("Поздравляю, вы прошли опрос, все результаты записаны!")
-    await asyncio.sleep(2)
+    await asyncio.sleep(1.5)
     await message.answer("Теперь вы можете сгенерировать свой план питания, нажав /plan_meals")
     await state.clear()
 
 #-------------------------------------/plan_meals/-------------------------------------------
 
 @user_private_router.message(Command("plan_meals"))
-async def plan_meals(message: types.Message, session: AsyncSession):
+async def plan_meals(message: types.Message, session: AsyncSession, state: FSMContext):
 
+    await state.clear()
     await plan_meal(message, session, Breakfast, "breakfast", "Завтрак", first_sending=True)
     await plan_meal(message, session, Dinner, "dinner", "Обед")
     await plan_meal(message, session, Snack, "snack", "Перекус")
@@ -268,6 +284,31 @@ async def back_handler(callback: types.CallbackQuery, session: AsyncSession):
                          message_id=callback.message.message_id,
                          reply_markup=look_cooking_kb(meal_info["dish_id"], data[0].food_intake).as_markup())
 
+#-------------------------------------/tariffs/-------------------------------------------
+
+@user_private_router.message(Command("payment"))
+async def tariffs(message: types.Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Тарифы для бота. \n\nОбратите внимание, отменить подписку после оплаты нельзя!:",
+                         reply_markup=tariffs_kb.as_markup())
+
+
+@user_private_router.callback_query(F.data.startswith("tariff"))
+async def payment(callback: CallbackQuery):
+    await callback.answer()
+    date = callback.data.split("_")[1]
+    price = callback.data.split("_")[2]
+
+    await bot.send_invoice(
+        callback.message.chat.id,
+        title=f"Подписка на {date}",
+        description="Доступ к боту",
+        provider_token=os.getenv("PAYMENT_TOKEN"),
+        currency="rub",
+        prices=[LabeledPrice(label=f"Доступ к боту на {date}", amount=int(price) * 100)],
+        start_parameter="subscription",
+        payload="user_subscription"
+    )
 
 @user_private_router.message(~Command("admin"))
 async def trash_remove(message: types.Message):

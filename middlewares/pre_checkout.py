@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from bot_setup import bot
 from database.orm_query import orm_get_paid_users, orm_delete_temporary_dish
+from keyboards.inline import tariffs_kb
 
 
 class CheckIsPaidMiddleware(BaseMiddleware):
@@ -32,18 +33,20 @@ class CheckIsPaidMiddleware(BaseMiddleware):
             payment = await orm_get_paid_users(session, user_id)
 
             if not payment:
-                await event.answer("💰 Чтобы начать пользоваться ботом, оплатите подписку:")
+                await event.answer("💰 Чтобы начать пользоваться ботом, выберите тариф:", reply_markup=tariffs_kb.as_markup())
 
-                await bot.send_invoice(
-                    event.chat.id,
-                    title="Подписка на месяц",
-                    description="Доступ к боту",
-                    provider_token=os.getenv("PAYMENT_TOKEN"),
-                    currency="rub",
-                    prices=[LabeledPrice(label="Доступ к боту на 1 месяц", amount=500 * 100)],
-                    start_parameter="month_subscription",
-                    payload="user_subscription"
-                )
+                # await bot.send_invoice(
+                #     event.chat.id,
+                #     title="Подписка на месяц",
+                #     description="Доступ к боту",
+                #     provider_token=os.getenv("PAYMENT_TOKEN"),
+                #     currency="rub",
+                #     prices=[LabeledPrice(label="Доступ к боту на 1 месяц", amount=500 * 100)],
+                #     start_parameter="month_subscription",
+                #     payload="user_subscription"
+                # )
+
+
             else:
                 # Если оплата есть, продолжаем обработку
                 return await handler(event, data)

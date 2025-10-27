@@ -87,3 +87,4 @@ class PaidUsers(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(unique=True)
 
+
