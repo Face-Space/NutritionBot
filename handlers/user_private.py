@@ -2,6 +2,7 @@ import asyncio
 import logging
 import json
 import os
+from datetime import date, timedelta
 
 from aiogram import Router, types, F
 from aiogram.filters import CommandStart, Command
@@ -13,7 +14,7 @@ from dotenv import load_dotenv, find_dotenv
 from database.models import Breakfast, Snack, Dinner, EveningMeal
 from database.orm_query import *
 from keyboards.inline import *
-from services.calculate_nutrition import calculate_nutrition, number_of_grams
+from services.calculate_nutrition import calculate_nutrition, number_of_grams, parse_interval
 from states.FSM import UserSurvey
 from bot_setup import bot
 
@@ -25,7 +26,7 @@ load_dotenv(find_dotenv())
 
 
 @user_private_router.message(CommandStart())
-async def start_bot(message: types.Message, session: AsyncSession, state: FSMContext):
+async def start_bot(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("Привет 👋, я - NutritionBot 🤖, бот, для управления питанием с нестандартным подходом "
                          "к планированию рациона 🥙\n")
@@ -53,20 +54,33 @@ async def back_to_menu(callback: CallbackQuery, state: FSMContext):
 # Перед оплатой Telegram вызывает этот обработчик
 @user_private_router.pre_checkout_query()
 async def pre_checkout_q(pre_checkout_query: PreCheckoutQuery):
-    await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+    try:
+        await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+
+    except Exception as e:
+        logger.error(f"Ошибка оплаты: {e}")
+        await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=False, error_message=f"Ошибка оплаты:{e}.\n\n "
+                                "Недостаточно средств на счету либо проверьте правильность введённых данных.")
 
 
 # Успешная оплата — Telegram отправляет ContentType.SUCCESSFUL_PAYMENT
 @user_private_router.message(F.successful_payment)
 async def successful_payment(message: types.Message, session: AsyncSession):
-    await orm_mark_user_paid(session, message.from_user.id)
-    await message.answer("Спасибо за оплату! \nТеперь доступ открыт ✅. \nДля перезапуска нажмите /start")
+    try:
+        sub_interval = parse_interval(message.successful_payment.invoice_payload)
+        end_subscription = date.today() + sub_interval
+        await orm_mark_user_paid(session, message.from_user.id, end_subscription)
+        await message.answer("Спасибо за оплату! \nТеперь доступ открыт ✅. \nДля перезапуска нажмите /start")
+
+    except Exception as e:
+        logger.error(f"Ошибка оплаты: {e}")
+        await message.answer(f"Ошибка на стороне сервера:{e}. Пожалуйста попробуйте позже")
 
 
 # ---------------------------------/set_params/---------------------------------------------
 
 @user_private_router.message(Command("set_params"))
-async def set_params(message: types.Message, state: FSMContext, session: AsyncSession):
+async def set_params(message: types.Message, state: FSMContext):
     await state.clear()
     await message.answer("Отлично, давайте перейдём к делу.")
     await asyncio.sleep(1.5)
@@ -296,18 +310,18 @@ async def tariffs(message: types.Message, state: FSMContext):
 @user_private_router.callback_query(F.data.startswith("tariff"))
 async def payment(callback: CallbackQuery):
     await callback.answer()
-    date = callback.data.split("_")[1]
+    pay_date = callback.data.split("_")[1]
     price = callback.data.split("_")[2]
 
     await bot.send_invoice(
         callback.message.chat.id,
-        title=f"Подписка на {date}",
+        title=f"Подписка на {pay_date}",
         description="Доступ к боту",
         provider_token=os.getenv("PAYMENT_TOKEN"),
         currency="rub",
-        prices=[LabeledPrice(label=f"Доступ к боту на {date}", amount=int(price) * 100)],
+        prices=[LabeledPrice(label=f"Доступ к боту на {pay_date}", amount=int(price) * 100)],
         start_parameter="subscription",
-        payload="user_subscription"
+        payload=f"{pay_date}"
     )
 
 @user_private_router.message(~Command("admin"))

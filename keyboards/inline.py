@@ -7,6 +7,7 @@ gender_kb = InlineKeyboardBuilder()
 gender_kb.add(InlineKeyboardButton(text="Мужской", callback_data="male"),
               InlineKeyboardButton(text="Женский", callback_data="female"),
               InlineKeyboardButton(text="Отмена", callback_data="cancel"))
+gender_kb.adjust(2)
 
 
 activity_level_kb = InlineKeyboardBuilder()
@@ -46,7 +47,7 @@ def back_to_dish_info(food_intake: str) -> InlineKeyboardBuilder:
 
 tariffs_kb = InlineKeyboardBuilder()
 tariffs_kb.add(InlineKeyboardButton(text="1 месяц - 500р.", callback_data="tariff_1 месяц_500"),
-               InlineKeyboardButton(text="6 месяцев - 2500р.", callback_data="tariff_пол года_2500"),
+               InlineKeyboardButton(text="6 месяцев - 2500р.", callback_data="tariff_6 месяцев_2500"),
                InlineKeyboardButton(text="1 год - 5000р.", callback_data="tariff_1 год_5000"))
 tariffs_kb.adjust(1)
 

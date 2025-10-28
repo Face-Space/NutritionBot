@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Dict
 import logging
 
@@ -69,5 +70,12 @@ def number_of_grams(data: dict, meals, food_intake, return_weight = True):
         logger.error("Ошибка, в БД калорийность продукта 0 калорий!")
 
 
+def parse_interval(payload: str) -> timedelta:
+    mapping = {
+        "1 месяц": timedelta(days=30),
+        "6 месяцев": timedelta(days=183),
+        "1 год": timedelta(days=365)
+    }
 
+    return mapping.get(payload, timedelta(days=0))
 

@@ -74,10 +74,10 @@ async def orm_get_paid_users(session: AsyncSession, user_id: int):
     return result.scalars().all()
 
 
-async def orm_mark_user_paid(session: AsyncSession, user_id: int):
-    query = insert(PaidUsers).values(user_id=int(user_id)).on_conflict_do_update(
+async def orm_mark_user_paid(session: AsyncSession, user_id: int, end_subscription):
+    query = insert(PaidUsers).values(user_id=int(user_id), end_subscription=end_subscription).on_conflict_do_update(
         index_elements=['user_id'],  # какие поля обновлять
-        set_={'user_id': int(user_id)}  # какие значения вставлять при совпадении
+        set_={'end_subscription': end_subscription}  # какие значения вставлять при совпадении
     )
     await session.execute(query)
     await session.commit()
