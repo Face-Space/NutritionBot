@@ -9,7 +9,7 @@ from dotenv import load_dotenv, find_dotenv
 from database.engine import session_maker, create_db
 from handlers import admin_router
 from middlewares.db import DataBaseSession
-from middlewares.pre_checkout import CheckIsPaidMiddleware
+from middlewares.pre_checkout import CheckIsPaidMiddleware, SubscriptionEndWarning
 
 load_dotenv(find_dotenv())
 
@@ -54,7 +54,9 @@ async def main():
         dp.startup.register(_on_startup)
         dp.shutdown.register(_on_shutdown)
         dp.update.middleware(DataBaseSession(session_pool=session_maker))
+        user_private_router.message.middleware(SubscriptionEndWarning(session_pool=session_maker))
         user_private_router.message.middleware(CheckIsPaidMiddleware(session_pool=session_maker))
+
         await bot.delete_webhook(drop_pending_updates=True)
         await bot.set_my_commands(commands=private, scope=types.BotCommandScopeAllPrivateChats())
         await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())

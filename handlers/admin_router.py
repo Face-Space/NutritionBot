@@ -1,4 +1,5 @@
 import logging
+import asyncio
 
 
 from aiogram import Router, types, F
@@ -16,6 +17,10 @@ logger = logging.getLogger(__name__)
 admin_router = Router()
 admin_router.message.filter(IsAdmin())
 
+class ParsingManager:
+    active_parsing_users:set[int]
+
+
 
 @admin_router.message(Command("admin"))
 async def start_changes(message: types.Message, state: FSMContext):
@@ -26,9 +31,24 @@ async def start_changes(message: types.Message, state: FSMContext):
 
 @admin_router.callback_query(F.data == "parse_breakfast")
 async def parse_breakfast(callback: CallbackQuery):
+    async with asyncio.Lock():
+        if callback.from_user.id in ParsingManager.active_parsing_users:
+            await callback.message.answer("Парсинг уже запущен, пожалуйста подождите!", show_alert=True)
+            logger.warning(f"Пользователь {callback.from_user.first_name} уже запустил парсинг")
+            return
+
+        ParsingManager.active_parsing_users.add(callback.from_user.id)
+
     await callback.answer()
     await callback.message.answer("Идёт парсинг в БД, обычно это занимает около 10 минут, пожалуйста подождите")
-    await scrape_and_store()
+
+    try:
+        await scrape_and_store()
+    finally:
+        async with asyncio.Lock():
+            ParsingManager.active_parsing_users.remove(callback.from_user.id)
+
+
     await callback.message.answer("Парсинг успешно окончен, можете тестировать")
 
 
